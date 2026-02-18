@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mis Ideas</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+  <!-- Cloudinary Upload Widget -->
+  <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
@@ -108,7 +110,19 @@
       transition:background 0.15s, color 0.15s;
     }
     .card:hover .tag { background:#e8e4de; }
-    .card-more { font-size:0.7rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--red); opacity:0; transition:opacity 0.2s; }
+    .card-actions {
+      display:flex; gap:8px; margin-top:12px;
+    }
+    .btn-edit {
+      background:var(--bg2); border:1px solid var(--border); color:var(--black);
+      font-family:'Lato',sans-serif; font-size:0.65rem; font-weight:700;
+      letter-spacing:0.1em; text-transform:uppercase; padding:6px 12px;
+      cursor:pointer; transition:all 0.2s; border-radius:3px;
+    }
+    .btn-edit:hover { background:var(--border); }
+    .card-more {
+      font-size:0.7rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--red); opacity:0; transition:opacity 0.2s;
+    }
     .card:hover .card-more { opacity:1; }
     .empty { font-size:0.82rem; color:var(--mid); font-style:italic; padding:18px 20px; border:1px dashed var(--border); background:white; }
     
@@ -136,6 +150,28 @@
     }
     .modal-close:hover { color:var(--black); }
     
+    .files-list {
+      margin-top:16px; padding-top:16px; border-top:1px solid var(--border);
+    }
+    .files-list h4 {
+      font-size:0.75rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase;
+      color:var(--mid); margin-bottom:10px;
+    }
+    .file-item {
+      display:flex; align-items:center; gap:8px; padding:8px; background:var(--bg);
+      border:1px solid var(--border); border-radius:4px; margin-bottom:6px;
+    }
+    .file-item a {
+      color:var(--black); text-decoration:none; font-size:0.85rem; flex:1;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .file-item a:hover { color:var(--red); }
+    .file-icon {
+      font-size: 1rem;
+    }
+    
     .form-box {
       background:white; max-width:560px; width:100%; border-top:4px solid var(--black);
       position:relative; box-shadow:0 20px 60px rgba(0,0,0,0.25); animation:up 0.25s ease;
@@ -154,6 +190,51 @@
       border-color:var(--black); border-bottom-color:var(--red); background:white;
     }
     .form-group select option { background:white; }
+    
+    .btn-upload {
+      background: var(--bg2);
+      border: 2px dashed var(--border);
+      padding: 12px 20px;
+      text-align: center;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all 0.2s;
+      font-size: 0.9rem;
+      color: var(--black);
+    }
+    .btn-upload:hover {
+      border-color: var(--black);
+      background: var(--bg);
+    }
+    .btn-upload.uploading {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+    
+    .file-list-preview {
+      margin-top: 10px;
+    }
+    .file-preview-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      margin-bottom: 5px;
+      font-size: 0.85rem;
+    }
+    .file-preview-item .remove-file {
+      cursor: pointer;
+      color: var(--red);
+      font-weight: bold;
+      padding: 0 5px;
+    }
+    .file-preview-item .remove-file:hover {
+      color: var(--black);
+    }
+    
     .form-foot { padding:14px 28px 24px; display:flex; justify-content:flex-end; gap:10px; border-top:1px solid var(--border); }
     
     .btn-cancel {
@@ -270,6 +351,10 @@
     </div>
     <div class="modal-body" id="m-body"></div>
     <div class="modal-foot" id="m-tags"></div>
+    <div class="files-list" id="m-files" style="display:none; padding:14px 32px 18px;">
+      <h4>📎 Archivos adjuntos</h4>
+      <div id="m-files-content"></div>
+    </div>
   </div>
 </div>
 
@@ -277,7 +362,7 @@
 <div class="overlay" id="form-overlay" onclick="closeIfOutside(event,'form-overlay')">
   <div class="form-box">
     <button class="modal-close" onclick="close_('form-overlay')">✕</button>
-    <div class="form-head"><h2>Nueva idea</h2></div>
+    <div class="form-head"><h2 id="form-title">Nueva idea</h2></div>
     <div class="form-body">
       <div class="form-group">
         <label>Sección</label>
@@ -301,6 +386,13 @@
         <label>Etiquetas (separadas por coma)</label>
         <input id="f-tags" type="text" placeholder="nación, orden, política">
       </div>
+      <div class="form-group">
+        <label>Archivos adjuntos</label>
+        <div class="btn-upload" id="upload-btn" onclick="openUploadWidget()">
+          📎 Click para subir archivos
+        </div>
+        <div class="file-list-preview" id="file-preview"></div>
+      </div>
       <div class="readonly-notice" id="readonly-msg">
         ⚠️ Solo <strong>nilelpeque@gmail.com</strong> puede publicar ideas.
       </div>
@@ -315,7 +407,7 @@
 <!-- 🔥 FIREBASE + AUTH + LÓGICA -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-  import { getFirestore, collection, addDoc, getDocs, query, orderBy, Timestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+  import { getFirestore, collection, addDoc, getDocs, query, orderBy, Timestamp, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
   import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 
   // ============================================
@@ -341,7 +433,10 @@
   let posts = [];
   let currentUser = null;
   let isAuthorized = false;
-  
+  let editingId = null;
+  let uploadedFiles = [];
+  let cloudinaryWidget = null;
+
   const LABELS = { politica:'Política', sociedad:'Sociedad', economia:'Economía', cultura:'Cultura', historia:'Historia' };
   const SECS = Object.keys(LABELS);
 
@@ -417,6 +512,51 @@
     cargarIdeas();
   });
 
+  // ============ CLOUDINARY UPLOAD ============
+  window.openUploadWidget = function() {
+    if (!cloudinaryWidget) {
+      cloudinaryWidget = cloudinary.createUploadWidget({
+        cloudName: 'dxsfcenqv',
+        uploadPreset: 'mis-ideas',
+        sources: ['local', 'url'],
+        multiple: true,
+        maxFiles: 5,
+        clientAllowedFormats: ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'txt', 'xls', 'xlsx', 'zip'],
+        maxFileSize: 50000000,
+        folder: 'mis-ideas'
+      }, (error, result) => {
+        if (!error && result && result.event === "success") {
+          uploadedFiles.push({
+            url: result.info.secure_url,
+            name: result.info.original_filename,
+            type: result.info.resource_type
+          });
+          updateFilePreview();
+        }
+      });
+    }
+    cloudinaryWidget.open();
+  };
+
+  function updateFilePreview() {
+    const preview = document.getElementById('file-preview');
+    if (uploadedFiles.length === 0) {
+      preview.innerHTML = '';
+      return;
+    }
+    preview.innerHTML = uploadedFiles.map((file, index) => `
+      <div class="file-preview-item">
+        <span>📄 ${file.name}</span>
+        <span class="remove-file" onclick="removeFile(${index})">×</span>
+      </div>
+    `).join('');
+  }
+
+  window.removeFile = function(index) {
+    uploadedFiles.splice(index, 1);
+    updateFilePreview();
+  };
+
   // ============ FIRESTORE ============
   window.cargarIdeas = async function() {
     try {
@@ -433,14 +573,22 @@
     try {
       const btn = document.getElementById('btn-publish');
       btn.textContent = 'Guardando...'; btn.disabled = true;
-      await addDoc(collection(db, "ideas"), ideaData);
-      btn.textContent = 'Publicar'; btn.disabled = false;
+      
+      if (editingId) {
+        const ideaRef = doc(db, "ideas", editingId);
+        await updateDoc(ideaRef, ideaData);
+      } else {
+        await addDoc(collection(db, "ideas"), ideaData);
+      }
+      
+      btn.textContent = editingId ? 'Actualizar' : 'Publicar';
+      btn.disabled = false;
       await cargarIdeas();
       return true;
     } catch (e) {
       console.error("Error guardando:", e);
       alert(e.code === 'permission-denied' ? '🔐 Permiso denegado.' : 'Error: ' + e.message);
-      document.getElementById('btn-publish').textContent = 'Publicar';
+      document.getElementById('btn-publish').textContent = editingId ? 'Actualizar' : 'Publicar';
       document.getElementById('btn-publish').disabled = false;
       return false;
     }
@@ -456,11 +604,33 @@
             <div class="card-date">${p.date}</div>
             <div class="card-idea">${p.idea}</div>
             <div class="card-tags">${p.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+            <div class="card-actions">
+              ${isAuthorized ? `<button class="btn-edit" onclick="event.stopPropagation(); editIdea('${p.id}')">✏️ Editar</button>` : ''}
+            </div>
             <div class="card-more">Leer más →</div>
           </div>`).join('')
         : `<div class="empty">Sin entradas aún.</div>`;
     });
   }
+
+  window.editIdea = async function(id) {
+    if (!isAuthorized) { alert('🔐 Inicia sesión para editar.'); return; }
+    const post = posts.find(p => p.id === id);
+    if (!post) return;
+    
+    editingId = id;
+    uploadedFiles = post.files || [];
+    
+    document.getElementById('form-title').textContent = 'Editar idea';
+    document.getElementById('f-sec').value = post.section;
+    document.getElementById('f-idea').value = post.idea;
+    document.getElementById('f-body').value = post.body.replace(/<p>|<\/p>/g, '');
+    document.getElementById('f-tags').value = post.tags.join(', ');
+    
+    updateFilePreview();
+    document.getElementById('btn-publish').textContent = 'Actualizar';
+    open_('form-overlay');
+  };
 
   window.openPost = function(id) {
     const p = posts.find(x => x.id === id);
@@ -469,15 +639,51 @@
     document.getElementById('m-title').textContent = p.idea;
     document.getElementById('m-body').innerHTML = p.body;
     document.getElementById('m-tags').innerHTML = p.tags.map(t=>`<span class="tag">${t}</span>`).join('');
+    
+    const filesDiv = document.getElementById('m-files');
+    const filesContent = document.getElementById('m-files-content');
+    if (p.files && p.files.length > 0) {
+      filesDiv.style.display = 'block';
+      filesContent.innerHTML = p.files.map(f => {
+        const icon = getFileIcon(f.name || f.url);
+        return `
+          <div class="file-item">
+            <a href="${f.url}" target="_blank" rel="noopener noreferrer">
+              <span class="file-icon">${icon}</span>
+              <span>${f.name || 'Descargar archivo'}</span>
+            </a>
+          </div>
+        `;
+      }).join('');
+    } else {
+      filesDiv.style.display = 'none';
+    }
+    
     open_('read-overlay');
   };
 
+  function getFileIcon(filename) {
+    if (!filename) return '📄';
+    const lower = filename.toLowerCase();
+    if (lower.includes('.pdf')) return '📕';
+    if (lower.includes('.doc') || lower.includes('.txt')) return '📝';
+    if (lower.includes('.xls') || lower.includes('.csv')) return '📊';
+    if (lower.includes('.jpg') || lower.includes('.png') || lower.includes('.gif')) return '🖼️';
+    if (lower.includes('.zip') || lower.includes('.rar')) return '📦';
+    return '📄';
+  }
+
   window.openForm = function(sec) {
     if (!isAuthorized) { alert('🔐 Inicia sesión con ' + AUTHORIZED_EMAIL); return; }
+    editingId = null;
+    uploadedFiles = [];
+    document.getElementById('form-title').textContent = 'Nueva idea';
     if (sec) document.getElementById('f-sec').value = sec;
     document.getElementById('f-idea').value = '';
     document.getElementById('f-body').value = '';
     document.getElementById('f-tags').value = '';
+    document.getElementById('file-preview').innerHTML = '';
+    document.getElementById('btn-publish').textContent = 'Publicar';
     open_('form-overlay');
   };
 
@@ -487,6 +693,7 @@
     const body = document.getElementById('f-body').value.trim();
     const section = document.getElementById('f-sec').value;
     const tagsRaw = document.getElementById('f-tags').value.trim();
+    
     if (!idea || !body) { alert('Rellena idea y desarrollo.'); return; }
     
     const now = new Date();
@@ -497,11 +704,18 @@
       section, date, idea,
       body: body.split('\n\n').map(p=>`<p>${p}</p>`).join(''),
       tags,
+      files: uploadedFiles,
       timestamp: Timestamp.now(),
       author: currentUser.email
     };
     
-    if (await guardarIdea(ideaData)) close_('form-overlay');
+    const success = await guardarIdea(ideaData);
+    if (success) {
+      close_('form-overlay');
+      editingId = null;
+      uploadedFiles = [];
+      document.getElementById('file-preview').innerHTML = '';
+    }
   };
 
   window.open_ = id => document.getElementById(id).classList.add('open');
