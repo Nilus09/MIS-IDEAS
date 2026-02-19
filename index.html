@@ -410,9 +410,6 @@
   import { getFirestore, collection, addDoc, getDocs, query, orderBy, Timestamp, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
   import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 
-  // ============================================
-  // 🔥 TUS CREDENCIALES DE FIREBASE
-  // ============================================
   const firebaseConfig = {
     apiKey: "AIzaSyD57cIHb-k4bhMwKvoDHp2uOcJw_EDPVxg",
     authDomain: "netnull-a9a18.firebaseapp.com",
@@ -421,7 +418,6 @@
     messagingSenderId: "85420219235",
     appId: "1:85420219235:web:b7a93121caa8519602d156"
   };
-  // ============================================
 
   const AUTHORIZED_EMAIL = 'nilelpeque@gmail.com';
 
@@ -440,7 +436,6 @@
   const LABELS = { politica:'Política', sociedad:'Sociedad', economia:'Economía', cultura:'Cultura', historia:'Historia' };
   const SECS = Object.keys(LABELS);
 
-  // ============ AUTH ============
   window.loginWithGoogle = async function() {
     try {
       const result = await signInWithPopup(auth, provider);
@@ -518,17 +513,23 @@
       cloudinaryWidget = cloudinary.createUploadWidget({
         cloudName: 'dxsfcenqv',
         uploadPreset: 'mis-ideas',
-        sources: ['local', 'url'],
+        sources: ['local', 'url', 'camera', 'facebook', 'instagram'],
         multiple: true,
         maxFiles: 5,
-        clientAllowedFormats: ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'txt', 'xls', 'xlsx', 'zip'],
+        resourceType: 'auto',  // ← Permite imágenes, videos y raw files
+        clientAllowedFormats: [],  // ← Permite TODOS los formatos
         maxFileSize: 50000000,
         folder: 'mis-ideas'
       }, (error, result) => {
-        if (!error && result && result.event === "success") {
+        if (error) {
+          console.error("Error uploading:", error);
+          alert("Error al subir el archivo: " + error.message);
+          return;
+        }
+        if (result && result.event === "success") {
           uploadedFiles.push({
             url: result.info.secure_url,
-            name: result.info.original_filename,
+            name: result.info.original_filename || result.info.public_id,
             type: result.info.resource_type
           });
           updateFilePreview();
@@ -557,7 +558,6 @@
     updateFilePreview();
   };
 
-  // ============ FIRESTORE ============
   window.cargarIdeas = async function() {
     try {
       const q = query(collection(db, "ideas"));
@@ -594,7 +594,6 @@
     }
   };
 
-  // ============ UI ============
   function render() {
     SECS.forEach(sec => {
       const grid = document.getElementById('grid-' + sec);
