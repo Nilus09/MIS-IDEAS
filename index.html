@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mis Ideas</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
-  <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
@@ -385,8 +386,9 @@
       </div>
       <div class="form-group">
         <label>Archivos adjuntos</label>
-        <div class="btn-upload" id="upload-btn" onclick="openUploadWidget()">
-          📎 Click para subir archivos
+        <input type="file" id="f-file-input" multiple style="display:none" onchange="handleFileSelect(event)">
+        <div class="btn-upload" onclick="document.getElementById('f-file-input').click()">
+          📎 Click para seleccionar archivos
         </div>
         <div class="file-list-preview" id="file-preview"></div>
       </div>
@@ -405,7 +407,11 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
   import { getFirestore, collection, addDoc, getDocs, query, orderBy, Timestamp, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
   import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
+  // ============================================
+  // 🔥 FIREBASE CONFIG
+  // ============================================
   const firebaseConfig = {
     apiKey: "AIzaSyD57cIHb-k4bhMwKvoDHp2uOcJw_EDPVxg",
     authDomain: "netnull-a9a18.firebaseapp.com",
@@ -414,6 +420,15 @@
     messagingSenderId: "85420219235",
     appId: "1:85420219235:web:b7a93121caa8519602d156"
   };
+
+  // ============================================
+  // 🗄️ SUPABASE CONFIG
+  // ============================================
+  const supabaseUrl = 'https://epuppytaijalxggsmnhn.supabase.co';
+  const supabaseAnonKey = 'sb_publishable_nHDee2p3jhqi1iKsANLXJQ_FHZTqIiv';
+  const supabase = createClient(supabaseUrl, supabaseAnonKey);
+  const SUPABASE_BUCKET = 'archivos';
+  // ============================================
 
   const AUTHORIZED_EMAIL = 'nilelpeque@gmail.com';
 
@@ -426,8 +441,7 @@
   let currentUser = null;
   let isAuthorized = false;
   let editingId = null;
-  let uploadedFiles = [];
-  let cloudinaryWidget = null;
+  let selectedFiles = [];
 
   const LABELS = { politica:'Política', sociedad:'Sociedad', economia:'Economía', cultura:'Cultura', historia:'Historia' };
   const SECS = Object.keys(LABELS);
@@ -503,44 +517,63 @@
     cargarIdeas();
   });
 
-  window.openUploadWidget = function() {
-    if (!cloudinaryWidget) {
-      cloudinaryWidget = cloudinary.createUploadWidget({
-        cloudName: 'dxsfcenqv',
-        uploadPreset: 'mis-ideas',
-        sources: ['local'],
-        multiple: true,
-        maxFiles: 5,
-        resourceType: 'auto',
-        clientAllowedFormats: [],
-        maxFileSize: 50000000,
-        folder: 'mis-ideas'
-      }, (error, result) => {
-        if (error) {
-          console.error("Cloudinary Error:", error);
-          alert("Error al subir: " + error.message);
-          return;
-        }
-        if (result && result.event === "success") {
-          uploadedFiles.push({
-            url: result.info.secure_url,
-            name: result.info.original_filename || result.info.public_id,
-            type: result.info.resource_type
+  // ============ SUPABASE FILE UPLOAD ============
+  window.handleFileSelect = async function(event) {
+    const files = Array.from(event.target.files);
+    if (files.length === 0) return;
+
+    const btnPublish = document.getElementById('btn-publish');
+    btnPublish.disabled = true;
+    btnPublish.textContent = 'Subiendo...';
+
+    selectedFiles = [];
+    const preview = document.getElementById('file-preview');
+
+    for (const file of files) {
+      try {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+        const filePath = `${currentUser.uid}/${fileName}`;
+
+        const { data, error } = await supabase
+          .storage
+          .from(SUPABASE_BUCKET)
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
           });
-          updateFilePreview();
-        }
-      });
+
+        if (error) throw error;
+
+        const { data: { publicUrl } } = supabase
+          .storage
+          .from(SUPABASE_BUCKET)
+          .getPublicUrl(filePath);
+
+        selectedFiles.push({
+          name: file.name,
+          url: publicUrl,
+          path: filePath
+        });
+
+      } catch (error) {
+        console.error("Error uploading file:", error);
+        alert(`Error subiendo ${file.name}: ${error.message}`);
+      }
     }
-    cloudinaryWidget.open();
+
+    updateFilePreview();
+    btnPublish.disabled = false;
+    btnPublish.textContent = editingId ? 'Actualizar' : 'Publicar';
   };
 
   function updateFilePreview() {
     const preview = document.getElementById('file-preview');
-    if (uploadedFiles.length === 0) {
+    if (selectedFiles.length === 0) {
       preview.innerHTML = '';
       return;
     }
-    preview.innerHTML = uploadedFiles.map((file, index) => `
+    preview.innerHTML = selectedFiles.map((file, index) => `
       <div class="file-preview-item">
         <span>📄 ${file.name}</span>
         <span class="remove-file" onclick="removeFile(${index})">×</span>
@@ -549,10 +582,11 @@
   }
 
   window.removeFile = function(index) {
-    uploadedFiles.splice(index, 1);
+    selectedFiles.splice(index, 1);
     updateFilePreview();
   };
 
+  // ============ FIRESTORE ============
   window.cargarIdeas = async function() {
     try {
       const q = query(collection(db, "ideas"));
@@ -589,6 +623,7 @@
     }
   };
 
+  // ============ UI ============
   function render() {
     SECS.forEach(sec => {
       const grid = document.getElementById('grid-' + sec);
@@ -613,7 +648,7 @@
     if (!post) return;
     
     editingId = id;
-    uploadedFiles = post.files || [];
+    selectedFiles = post.files || [];
     
     document.getElementById('form-title').textContent = 'Editar idea';
     document.getElementById('f-sec').value = post.section;
@@ -670,12 +705,13 @@
   window.openForm = function(sec) {
     if (!isAuthorized) { alert('🔐 Inicia sesión con ' + AUTHORIZED_EMAIL); return; }
     editingId = null;
-    uploadedFiles = [];
+    selectedFiles = [];
     document.getElementById('form-title').textContent = 'Nueva idea';
     if (sec) document.getElementById('f-sec').value = sec;
     document.getElementById('f-idea').value = '';
     document.getElementById('f-body').value = '';
     document.getElementById('f-tags').value = '';
+    document.getElementById('f-file-input').value = '';
     document.getElementById('file-preview').innerHTML = '';
     document.getElementById('btn-publish').textContent = 'Publicar';
     open_('form-overlay');
@@ -698,7 +734,7 @@
       section, date, idea,
       body: body.split('\n\n').map(p=>`<p>${p}</p>`).join(''),
       tags,
-      files: uploadedFiles,
+      files: selectedFiles,
       timestamp: Timestamp.now(),
       author: currentUser.email
     };
@@ -707,7 +743,8 @@
     if (success) {
       close_('form-overlay');
       editingId = null;
-      uploadedFiles = [];
+      selectedFiles = [];
+      document.getElementById('f-file-input').value = '';
       document.getElementById('file-preview').innerHTML = '';
     }
   };
