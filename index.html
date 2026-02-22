@@ -46,7 +46,33 @@
     }
     .btn-logout:hover { background:rgba(255,255,255,0.1); color:#f0ede8; }
     
-    .user-info { color:rgba(240,237,232,0.8); font-size:0.75rem; margin-right:10px; }
+    /* ============================================
+       EMAIL DISPLAY BONITO
+       ============================================ */
+    .user-info {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      font-size: 0.75rem;
+      color: rgba(240, 237, 232, 0.9);
+      margin-right: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    
+    .user-info::before {
+      content: '';
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: #4CAF50;
+      border-radius: 50%;
+      box-shadow: 0 0 8px rgba(76, 175, 80, 0.5);
+    }
+    
+    .auth-buttons { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
     
     .btn-new {
       background:var(--red); color:#f0ede8; border:none;
@@ -128,7 +154,7 @@
     .empty { font-size:0.82rem; color:var(--mid); font-style:italic; padding:18px 20px; border:1px dashed var(--border); background:white; }
     
     /* ============================================
-       OVERLAY / MODAL (ARREGLO)
+       OVERLAY / MODAL
        ============================================ */
     .overlay {
       display: none;
@@ -341,21 +367,6 @@
       color: var(--black);
     }
     
-    .readonly-notice {
-      font-size: 0.7rem;
-      color: var(--mid);
-      font-style: italic;
-      padding: 8px 12px;
-      background: var(--bg2);
-      border-left: 2px solid var(--border);
-      margin-top: 8px;
-      display: none;
-    }
-    
-    .readonly-notice.visible {
-      display: block;
-    }
-    
     @keyframes up {
       from { opacity: 0; transform: translateY(14px); }
       to { opacity: 1; transform: translateY(0); }
@@ -373,7 +384,7 @@
       .auth-buttons{ width:100%; justify-content:flex-end; margin-top:8px; }
       .btn-login{ padding:10px 16px; font-size:0.75rem; min-height:44px; }
       .btn-logout{ padding:8px 14px; font-size:0.65rem; min-height:44px; }
-      .user-info{ font-size:0.7rem; margin-right:8px; }
+      .user-info{ font-size:0.7rem; margin-right:8px; padding:5px 10px; }
       .btn-new{ padding:10px 18px; font-size:0.7rem; min-height:44px; }
       nav{ padding:0; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; -ms-overflow-style:none; }
       nav::-webkit-scrollbar{ display:none; }
@@ -522,9 +533,6 @@
         </div>
         <div class="file-list-preview" id="file-preview"></div>
       </div>
-      <div class="readonly-notice" id="readonly-msg">
-        ⚠️ Solo <strong>nilelpeque@gmail.com</strong> puede publicar ideas.
-      </div>
     </div>
     <div class="form-foot">
       <button class="btn-cancel" onclick="close_('form-overlay')">Cancelar</button>
@@ -595,7 +603,6 @@
     } else {
       isAuthorized = false;
       currentUser = user;
-      if (user) alert(`🔐 Solo ${AUTHORIZED_EMAIL} puede publicar.`);
     }
     updateUI();
   }
@@ -606,7 +613,6 @@
     const userDisplay = document.getElementById('user-display');
     const userEmail = document.getElementById('user-email');
     const btnAdd = document.querySelectorAll('.btn-section-add');
-    const readonlyMsg = document.getElementById('readonly-msg');
     const btnPublish = document.getElementById('btn-publish');
 
     if (isAuthorized) {
@@ -615,22 +621,19 @@
       userDisplay.style.display = 'flex';
       userEmail.textContent = currentUser.email;
       btnAdd.forEach(btn => { btn.style.display = 'inline-block'; btn.disabled = false; });
-      readonlyMsg.classList.remove('visible');
       btnPublish.disabled = false;
     } else if (currentUser) {
       btnLogin.style.display = 'none';
       btnNewIdea.style.display = 'none';
       userDisplay.style.display = 'flex';
-      userEmail.textContent = currentUser.email + ' (solo lectura)';
+      userEmail.textContent = currentUser.email;
       btnAdd.forEach(btn => btn.style.display = 'none');
-      readonlyMsg.classList.add('visible');
       btnPublish.disabled = true;
     } else {
       btnLogin.style.display = 'inline-block';
       btnNewIdea.style.display = 'none';
       userDisplay.style.display = 'none';
       btnAdd.forEach(btn => btn.style.display = 'none');
-      readonlyMsg.classList.add('visible');
       btnPublish.disabled = true;
     }
   }
