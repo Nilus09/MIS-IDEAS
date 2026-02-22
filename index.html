@@ -47,32 +47,47 @@
     .btn-logout:hover { background:rgba(255,255,255,0.1); color:#f0ede8; }
     
     /* ============================================
-       EMAIL DISPLAY BONITO
+       AVATAR DE PERFIL
        ============================================ */
-    .user-info {
-      display: inline-flex;
+    .user-display {
+      display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 6px 12px;
-      background: rgba(255, 255, 255, 0.08);
-      border-radius: 20px;
-      font-size: 0.75rem;
-      color: rgba(240, 237, 232, 0.9);
-      margin-right: 10px;
-      border: 1px solid rgba(255, 255, 255, 0.15);
+      gap: 10px;
     }
     
-    .user-info::before {
+    .user-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      transition: border-color 0.2s;
+    }
+    
+    .user-avatar:hover {
+      border-color: rgba(255, 255, 255, 0.6);
+    }
+    
+    .user-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      font-size: 0.7rem;
+      color: rgba(240, 237, 232, 0.8);
+    }
+    
+    .user-status::before {
       content: '';
       display: inline-block;
-      width: 8px;
-      height: 8px;
+      width: 6px;
+      height: 6px;
       background: #4CAF50;
       border-radius: 50%;
-      box-shadow: 0 0 8px rgba(76, 175, 80, 0.5);
+      box-shadow: 0 0 6px rgba(76, 175, 80, 0.5);
     }
-    
-    .auth-buttons { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
     
     .btn-new {
       background:var(--red); color:#f0ede8; border:none;
@@ -384,7 +399,8 @@
       .auth-buttons{ width:100%; justify-content:flex-end; margin-top:8px; }
       .btn-login{ padding:10px 16px; font-size:0.75rem; min-height:44px; }
       .btn-logout{ padding:8px 14px; font-size:0.65rem; min-height:44px; }
-      .user-info{ font-size:0.7rem; margin-right:8px; padding:5px 10px; }
+      .user-avatar{ width:32px; height:32px; }
+      .user-status{ font-size:0.65rem; padding:3px 8px; }
       .btn-new{ padding:10px 18px; font-size:0.7rem; min-height:44px; }
       nav{ padding:0; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; -ms-overflow-style:none; }
       nav::-webkit-scrollbar{ display:none; }
@@ -439,8 +455,9 @@
     <div class="site-tagline">Cuaderno de pensamiento</div>
   </div>
   <div class="auth-buttons">
-    <div id="user-display" style="display:none;">
-      <span class="user-info" id="user-email"></span>
+    <div id="user-display" class="user-display" style="display:none;">
+      <img id="user-avatar" class="user-avatar" src="" alt="Perfil">
+      <span class="user-status">Conectado</span>
       <button class="btn-logout" onclick="logout()">Salir</button>
     </div>
     <button id="btn-login" class="btn-login" onclick="loginWithGoogle()">
@@ -611,7 +628,7 @@
     const btnLogin = document.getElementById('btn-login');
     const btnNewIdea = document.getElementById('btn-new-idea');
     const userDisplay = document.getElementById('user-display');
-    const userEmail = document.getElementById('user-email');
+    const userAvatar = document.getElementById('user-avatar');
     const btnAdd = document.querySelectorAll('.btn-section-add');
     const btnPublish = document.getElementById('btn-publish');
 
@@ -619,14 +636,14 @@
       btnLogin.style.display = 'none';
       btnNewIdea.style.display = 'inline-block';
       userDisplay.style.display = 'flex';
-      userEmail.textContent = currentUser.email;
+      userAvatar.src = currentUser.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(currentUser.displayName || 'User') + '&background=4CAF50&color=fff';
       btnAdd.forEach(btn => { btn.style.display = 'inline-block'; btn.disabled = false; });
       btnPublish.disabled = false;
     } else if (currentUser) {
       btnLogin.style.display = 'none';
       btnNewIdea.style.display = 'none';
       userDisplay.style.display = 'flex';
-      userEmail.textContent = currentUser.email;
+      userAvatar.src = currentUser.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(currentUser.displayName || 'User') + '&background=random&color=fff';
       btnAdd.forEach(btn => btn.style.display = 'none');
       btnPublish.disabled = true;
     } else {
