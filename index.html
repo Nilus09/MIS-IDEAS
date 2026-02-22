@@ -2,10 +2,9 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Mis Ideas</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
-  <!-- Supabase JS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -96,6 +95,8 @@
       background:white; border:1px solid var(--border); border-top:3px solid var(--black);
       border-left:3px solid transparent; padding:22px 22px 18px; cursor:pointer;
       transition:border-top-color 0.2s, border-left-color 0.2s, box-shadow 0.2s, transform 0.2s; position:relative;
+      text-decoration: none;
+      display: block;
     }
     .card:hover {
       border-top-color:var(--black); border-left-color:var(--red);
@@ -126,70 +127,97 @@
     .card:hover .card-more { opacity:1; }
     .empty { font-size:0.82rem; color:var(--mid); font-style:italic; padding:18px 20px; border:1px dashed var(--border); background:white; }
     
+    /* ============================================
+       OVERLAY / MODAL (ARREGLO)
+       ============================================ */
     .overlay {
-      display:none; position:fixed; inset:0; background:rgba(20,20,18,0.75);
-      z-index:200; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(2px);
-    }
-    .overlay.open { display:flex; }
-    
-    .modal {
-      background:white; max-width:620px; width:100%; max-height:85vh; overflow-y:auto;
-      position:relative; border-top:4px solid var(--red); box-shadow:0 20px 60px rgba(0,0,0,0.25);
-      animation:up 0.25s ease;
-    }
-    .modal-head { padding:30px 32px 22px; border-bottom:1px solid var(--border); }
-    .modal-cat { font-size:0.65rem; font-weight:700; letter-spacing:0.18em; text-transform:uppercase; color:var(--red); margin-bottom:10px; }
-    .modal-title { font-family:'Playfair Display',serif; font-size:1.45rem; font-weight:700; line-height:1.4; color:var(--black); }
-    .modal-body { padding:26px 32px 30px; font-size:0.97rem; line-height:1.85; color:var(--dark); }
-    .modal-body p+p { margin-top:1.1em; }
-    .modal-foot { padding:14px 32px 18px; border-top:1px solid var(--border); display:flex; flex-wrap:wrap; gap:5px; }
-    .modal-close {
-      position:absolute; top:14px; right:18px; background:none; border:none;
-      font-size:1rem; cursor:pointer; color:var(--mid); transition:color 0.15s;
-      line-height:1; padding:4px;
-    }
-    .modal-close:hover { color:var(--black); }
-    
-    .files-list {
-      margin-top:16px; padding-top:16px; border-top:1px solid var(--border);
-    }
-    .files-list h4 {
-      font-size:0.75rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase;
-      color:var(--mid); margin-bottom:10px;
-    }
-    .file-item {
-      display:flex; align-items:center; gap:8px; padding:8px; background:var(--bg);
-      border:1px solid var(--border); border-radius:4px; margin-bottom:6px;
-    }
-    .file-item a {
-      color:var(--black); text-decoration:none; font-size:0.85rem; flex:1;
-      display: flex;
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(20, 20, 18, 0.75);
+      z-index: 200;
       align-items: center;
-      gap: 6px;
+      justify-content: center;
+      padding: 20px;
+      backdrop-filter: blur(2px);
     }
-    .file-item a:hover { color:var(--red); }
-    .file-icon {
-      font-size: 1rem;
+    
+    .overlay.open {
+      display: flex;
     }
     
     .form-box {
-      background:white; max-width:560px; width:100%; border-top:4px solid var(--black);
-      position:relative; box-shadow:0 20px 60px rgba(0,0,0,0.25); animation:up 0.25s ease;
+      background: white;
+      max-width: 560px;
+      width: 100%;
+      border-top: 4px solid var(--black);
+      position: relative;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+      animation: up 0.25s ease;
+      max-height: 85vh;
+      overflow-y: auto;
     }
-    .form-head { padding:26px 28px 18px; border-bottom:1px solid var(--border); }
-    .form-head h2 { font-family:'Playfair Display',serif; font-size:1.1rem; font-weight:700; color:var(--black); }
-    .form-body { padding:24px 28px; display:flex; flex-direction:column; gap:18px; }
-    .form-group { display:flex; flex-direction:column; gap:7px; }
-    .form-group label { font-size:0.65rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--mid); }
-    .form-group input, .form-group textarea, .form-group select {
-      border:1px solid var(--border); border-bottom-width:2px; background:var(--bg);
-      color:var(--black); font-family:'Lato',sans-serif; font-size:0.95rem; font-weight:300;
-      padding:10px 12px; outline:none; transition:border-color 0.2s, background 0.2s; resize:vertical;
+    
+    .form-head {
+      padding: 26px 28px 18px;
+      border-bottom: 1px solid var(--border);
     }
-    .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
-      border-color:var(--black); border-bottom-color:var(--red); background:white;
+    
+    .form-head h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--black);
     }
-    .form-group select option { background:white; }
+    
+    .form-body {
+      padding: 24px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+    
+    .form-group label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--mid);
+    }
+    
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      border: 1px solid var(--border);
+      border-bottom-width: 2px;
+      background: var(--bg);
+      color: var(--black);
+      font-family: 'Lato', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 300;
+      padding: 10px 12px;
+      outline: none;
+      transition: border-color 0.2s, background 0.2s;
+      resize: vertical;
+    }
+    
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      border-color: var(--black);
+      border-bottom-color: var(--red);
+      background: white;
+    }
+    
+    .form-group select option {
+      background: white;
+    }
     
     .btn-upload {
       background: var(--bg2);
@@ -202,10 +230,12 @@
       font-size: 0.9rem;
       color: var(--black);
     }
+    
     .btn-upload:hover {
       border-color: var(--black);
       background: var(--bg);
     }
+    
     .btn-upload.uploading {
       opacity: 0.7;
       cursor: not-allowed;
@@ -214,6 +244,7 @@
     .file-list-preview {
       margin-top: 10px;
     }
+    
     .file-preview-item {
       display: flex;
       align-items: center;
@@ -225,52 +256,167 @@
       margin-bottom: 5px;
       font-size: 0.85rem;
     }
+    
     .file-preview-item .remove-file {
       cursor: pointer;
       color: var(--red);
       font-weight: bold;
       padding: 0 5px;
     }
+    
     .file-preview-item .remove-file:hover {
       color: var(--black);
     }
     
-    .form-foot { padding:14px 28px 24px; display:flex; justify-content:flex-end; gap:10px; border-top:1px solid var(--border); }
+    .form-foot {
+      padding: 14px 28px 24px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      border-top: 1px solid var(--border);
+    }
     
     .btn-cancel {
-      background:none; border:1px solid var(--border); color:var(--mid);
-      font-family:'Lato',sans-serif; font-size:0.72rem; font-weight:700;
-      letter-spacing:0.1em; text-transform:uppercase; padding:9px 18px;
-      cursor:pointer; transition:all 0.2s;
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--mid);
+      font-family: 'Lato', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 9px 18px;
+      cursor: pointer;
+      transition: all 0.2s;
     }
-    .btn-cancel:hover { border-color:var(--mid); color:var(--black); }
+    
+    .btn-cancel:hover {
+      border-color: var(--mid);
+      color: var(--black);
+    }
     
     .btn-pub {
-      background:var(--black); border:none; color:white;
-      font-family:'Lato',sans-serif; font-size:0.72rem; font-weight:700;
-      letter-spacing:0.1em; text-transform:uppercase; padding:9px 24px;
-      cursor:pointer; transition:background 0.2s;
+      background: var(--black);
+      border: none;
+      color: white;
+      font-family: 'Lato', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 9px 24px;
+      cursor: pointer;
+      transition: background 0.2s;
     }
-    .btn-pub:hover { background:var(--red); }
-    .btn-pub:disabled { background:var(--mid); cursor:not-allowed; }
+    
+    .btn-pub:hover {
+      background: var(--red);
+    }
+    
+    .btn-pub:disabled {
+      background: var(--mid);
+      cursor: not-allowed;
+    }
+    
+    .modal-close {
+      position: absolute;
+      top: 14px;
+      right: 18px;
+      background: none;
+      border: none;
+      font-size: 1rem;
+      cursor: pointer;
+      color: var(--mid);
+      transition: color 0.15s;
+      line-height: 1;
+      padding: 4px;
+      min-width: 44px;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .modal-close:hover {
+      color: var(--black);
+    }
     
     .readonly-notice {
-      font-size:0.7rem; color:var(--mid); font-style:italic;
-      padding:8px 12px; background:var(--bg2); border-left:2px solid var(--border);
-      margin-top:8px; display:none;
+      font-size: 0.7rem;
+      color: var(--mid);
+      font-style: italic;
+      padding: 8px 12px;
+      background: var(--bg2);
+      border-left: 2px solid var(--border);
+      margin-top: 8px;
+      display: none;
     }
-    .readonly-notice.visible { display:block; }
     
-    @keyframes up { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
-    ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg2)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+    .readonly-notice.visible {
+      display: block;
+    }
+    
+    @keyframes up {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg2); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
     
     @media(max-width:580px){
-      header{padding:24px 20px; flex-direction:column; align-items:flex-start;}
-      .auth-buttons{width:100%; justify-content:flex-end; margin-top:10px;}
-      nav{padding:0 10px}
-      main{padding:30px 16px 60px}
-      .posts-grid{grid-template-columns:1fr}
-      .modal-head,.modal-body,.modal-foot{padding-left:20px;padding-right:20px}
+      header{ padding:20px 16px 16px; flex-direction:column; align-items:flex-start; gap:12px; }
+      header::after{ left:16px; right:16px; }
+      .site-title{ font-size:1.5rem; }
+      .site-tagline{ font-size:0.6rem; }
+      .auth-buttons{ width:100%; justify-content:flex-end; margin-top:8px; }
+      .btn-login{ padding:10px 16px; font-size:0.75rem; min-height:44px; }
+      .btn-logout{ padding:8px 14px; font-size:0.65rem; min-height:44px; }
+      .user-info{ font-size:0.7rem; margin-right:8px; }
+      .btn-new{ padding:10px 18px; font-size:0.7rem; min-height:44px; }
+      nav{ padding:0; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; -ms-overflow-style:none; }
+      nav::-webkit-scrollbar{ display:none; }
+      nav a{ padding:14px 12px; font-size:0.65rem; white-space:nowrap; min-height:44px; display:flex; align-items:center; }
+      main{ padding:24px 12px 40px; }
+      .section{ margin-bottom:40px; }
+      .section-head{ flex-direction:column; align-items:flex-start; gap:10px; margin-bottom:20px; padding-bottom:10px; }
+      .section-head h2{ font-size:1.1rem; }
+      .btn-section-add{ padding:8px 16px; font-size:0.65rem; min-height:44px; width:100%; text-align:center; }
+      .posts-grid{ grid-template-columns:1fr; gap:12px; }
+      .card{ padding:18px 16px 16px; min-height:auto; }
+      .card-date{ font-size:0.6rem; }
+      .card-idea{ font-size:0.95rem; line-height:1.4; }
+      .card-tags{ gap:4px; }
+      .tag{ padding:2px 6px; font-size:0.55rem; }
+      .btn-edit{ padding:8px 14px; font-size:0.6rem; min-height:44px; }
+      .card-more{ font-size:0.65rem; }
+      .empty{ padding:16px; font-size:0.8rem; }
+      
+      /* Modal móvil */
+      .overlay{ padding: 0; }
+      .form-box{
+        width: 100%;
+        max-width: 100%;
+        height: 100%;
+        max-height: 100vh;
+        border-top: 3px solid var(--black);
+        border-radius: 0;
+      }
+      .form-head{ padding:20px 16px 16px; }
+      .form-head h2{ font-size:1rem; }
+      .form-body{ padding:16px; gap:14px; overflow-y:auto; }
+      .form-group input, .form-group textarea, .form-group select{ padding:12px; font-size:16px; min-height:44px; }
+      .form-group label{ font-size:0.6rem; }
+      .btn-upload{ padding:14px 16px; font-size:0.9rem; min-height:48px; }
+      .file-preview-item{ padding:8px 10px; font-size:0.8rem; }
+      .file-preview-item .remove-file{ padding:4px 8px; font-size:1.2rem; min-height:44px; min-width:44px; display:flex; align-items:center; justify-content:center; }
+      .form-foot{ padding:12px 16px 20px; flex-direction:column-reverse; gap:8px; }
+      .btn-cancel, .btn-pub{ width:100%; padding:12px 20px; min-height:48px; font-size:0.75rem; }
+      .modal-close{ top:12px; right:12px; }
+      
+      .card:active{ transform:scale(0.98); }
+      .btn-new:active, .btn-login:active, .btn-section-add:active{ transform:scale(0.97); }
     }
   </style>
 </head>
@@ -341,22 +487,6 @@
   </div>
 </main>
 
-<div class="overlay" id="read-overlay" onclick="closeIfOutside(event,'read-overlay')">
-  <div class="modal">
-    <button class="modal-close" onclick="close_('read-overlay')">✕</button>
-    <div class="modal-head">
-      <div class="modal-cat" id="m-cat"></div>
-      <div class="modal-title" id="m-title"></div>
-    </div>
-    <div class="modal-body" id="m-body"></div>
-    <div class="modal-foot" id="m-tags"></div>
-    <div class="files-list" id="m-files" style="display:none; padding:14px 32px 18px;">
-      <h4>📎 Archivos adjuntos</h4>
-      <div id="m-files-content"></div>
-    </div>
-  </div>
-</div>
-
 <div class="overlay" id="form-overlay" onclick="closeIfOutside(event,'form-overlay')">
   <div class="form-box">
     <button class="modal-close" onclick="close_('form-overlay')">✕</button>
@@ -409,9 +539,6 @@
   import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
   import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
-  // ============================================
-  // 🔥 FIREBASE CONFIG
-  // ============================================
   const firebaseConfig = {
     apiKey: "AIzaSyD57cIHb-k4bhMwKvoDHp2uOcJw_EDPVxg",
     authDomain: "netnull-a9a18.firebaseapp.com",
@@ -421,14 +548,10 @@
     appId: "1:85420219235:web:b7a93121caa8519602d156"
   };
 
-  // ============================================
-  // 🗄️ SUPABASE CONFIG
-  // ============================================
   const supabaseUrl = 'https://epuppytaijalxggsmnhn.supabase.co';
   const supabaseAnonKey = 'sb_publishable_nHDee2p3jhqi1iKsANLXJQ_FHZTqIiv';
   const supabase = createClient(supabaseUrl, supabaseAnonKey);
   const SUPABASE_BUCKET = 'archivos';
-  // ============================================
 
   const AUTHORIZED_EMAIL = 'nilelpeque@gmail.com';
 
@@ -517,7 +640,6 @@
     cargarIdeas();
   });
 
-  // ============ SUPABASE FILE UPLOAD ============
   window.handleFileSelect = async function(event) {
     const files = Array.from(event.target.files);
     if (files.length === 0) return;
@@ -586,7 +708,6 @@
     updateFilePreview();
   };
 
-  // ============ FIRESTORE ============
   window.cargarIdeas = async function() {
     try {
       const q = query(collection(db, "ideas"));
@@ -623,21 +744,20 @@
     }
   };
 
-  // ============ UI ============
   function render() {
     SECS.forEach(sec => {
       const grid = document.getElementById('grid-' + sec);
       const sp = posts.filter(p => p.section === sec);
       grid.innerHTML = sp.length
-        ? sp.map(p => `<div class="card" onclick="openPost('${p.id}')">
+        ? sp.map(p => `<a href="detalle.html?id=${p.id}" class="card">
             <div class="card-date">${p.date}</div>
             <div class="card-idea">${p.idea}</div>
             <div class="card-tags">${p.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
             <div class="card-actions">
-              ${isAuthorized ? `<button class="btn-edit" onclick="event.stopPropagation(); editIdea('${p.id}')">✏️ Editar</button>` : ''}
+              ${isAuthorized ? `<button class="btn-edit" onclick="event.stopPropagation(); event.preventDefault(); editIdea('${p.id}')">✏️ Editar</button>` : ''}
             </div>
             <div class="card-more">Leer más →</div>
-          </div>`).join('')
+          </a>`).join('')
         : `<div class="empty">Sin entradas aún.</div>`;
     });
   }
@@ -659,36 +779,6 @@
     updateFilePreview();
     document.getElementById('btn-publish').textContent = 'Actualizar';
     open_('form-overlay');
-  };
-
-  window.openPost = function(id) {
-    const p = posts.find(x => x.id === id);
-    if (!p) return;
-    document.getElementById('m-cat').textContent = LABELS[p.section] || p.section;
-    document.getElementById('m-title').textContent = p.idea;
-    document.getElementById('m-body').innerHTML = p.body;
-    document.getElementById('m-tags').innerHTML = p.tags.map(t=>`<span class="tag">${t}</span>`).join('');
-    
-    const filesDiv = document.getElementById('m-files');
-    const filesContent = document.getElementById('m-files-content');
-    if (p.files && p.files.length > 0) {
-      filesDiv.style.display = 'block';
-      filesContent.innerHTML = p.files.map(f => {
-        const icon = getFileIcon(f.name || f.url);
-        return `
-          <div class="file-item">
-            <a href="${f.url}" target="_blank" rel="noopener noreferrer">
-              <span class="file-icon">${icon}</span>
-              <span>${f.name || 'Descargar archivo'}</span>
-            </a>
-          </div>
-        `;
-      }).join('');
-    } else {
-      filesDiv.style.display = 'none';
-    }
-    
-    open_('read-overlay');
   };
 
   function getFileIcon(filename) {
