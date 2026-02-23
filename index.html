@@ -511,16 +511,25 @@
     currentUser = user;
     if (user) {
       isAdmin = user.email === ADMIN_EMAIL;
-      await registerUser(user);
-      const userData = await getUserData(user.uid);
-      myDisplayName = userData?.displayName || user.displayName || user.email.split('@')[0];
-      canWrite = isAdmin || userData?.canWrite === true;
+      // Si ya es admin, puede escribir directamente sin esperar Firestore
+      if (isAdmin) canWrite = true;
+      myDisplayName = user.displayName || user.email.split('@')[0];
+      updateUI(); // Actualizamos UI enseguida para quitar el botón "Acceder"
+      try {
+        await registerUser(user);
+        const userData = await getUserData(user.uid);
+        if (userData?.displayName) myDisplayName = userData.displayName;
+        canWrite = isAdmin || userData?.canWrite === true;
+        updateUI(); // Actualizamos de nuevo con los datos completos
+      } catch (e) {
+        console.warn('Error al cargar datos de usuario (¿reglas actualizadas?):', e.message);
+      }
     } else {
       isAdmin = false;
       canWrite = false;
       myDisplayName = '';
+      updateUI();
     }
-    updateUI();
     cargarIdeas();
     if (isAdmin) loadUsuarios();
   });
@@ -599,10 +608,18 @@
     const name = document.getElementById('custom-name-input').value.trim();
     if (!name) { alert('Escribe un nombre.'); return; }
     try {
+      // Actualizar nombre en perfil
       await updateDoc(doc(db, 'usuarios', currentUser.uid), { displayName: name });
       myDisplayName = name;
       document.getElementById('user-display-name').textContent = name;
+
+      // Actualizar nombre en todas las ideas de este usuario
+      const snap = await getDocs(collection(db, 'ideas'));
+      const miasIdeas = snap.docs.filter(d => d.data().author === currentUser.email);
+      await Promise.all(miasIdeas.map(d => updateDoc(doc(db, 'ideas', d.id), { authorName: name })));
+
       close_('name-overlay');
+      await cargarIdeas(); // Refrescar tarjetas
     } catch (err) {
       alert('Error al guardar: ' + err.message);
     }
