@@ -176,6 +176,45 @@
       text-align: center; color: var(--mid); font-size: 0.85rem; line-height: 1.6;
     }
     .chat-no-access strong { display: block; margin-bottom: 4px; color: var(--black); font-size: 0.9rem; }
+
+    /* Botones editar/borrar mensaje */
+    .chat-msg-actions { display:flex; gap:4px; margin-left:auto; opacity:0; transition:opacity 0.2s; }
+    .chat-msg:hover .chat-msg-actions { opacity:1; }
+    .btn-chat-edit, .btn-chat-delete {
+      background:none; border:none; cursor:pointer; font-size:0.8rem;
+      padding:2px 5px; border-radius:3px; transition:background 0.15s;
+    }
+    .btn-chat-edit:hover { background:var(--bg2); }
+    .btn-chat-delete:hover { background:#fce4ec; }
+
+    /* Badge editado */
+    .chat-edited {
+      font-size:0.6rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase;
+      color:var(--mid); font-style:italic;
+    }
+
+    /* Form edición inline */
+    .chat-msg-edit-form { margin-top:8px; }
+    .chat-edit-input {
+      width:100%; border:1px solid var(--border); border-bottom-width:2px;
+      background:var(--bg); color:var(--black); font-family:'Lato',sans-serif;
+      font-size:0.9rem; padding:8px 12px; outline:none; resize:vertical;
+      transition:border-color 0.2s; min-height:60px;
+    }
+    .chat-edit-input:focus { border-color:var(--black); border-bottom-color:var(--red); background:white; }
+    .chat-edit-actions { display:flex; gap:8px; margin-top:6px; }
+    .btn-chat-save {
+      background:var(--black); color:white; border:none; font-family:'Lato',sans-serif;
+      font-size:0.68rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase;
+      padding:6px 14px; cursor:pointer; transition:background 0.2s;
+    }
+    .btn-chat-save:hover { background:var(--red); }
+    .btn-chat-cancel-edit {
+      background:none; border:1px solid var(--border); color:var(--mid);
+      font-family:'Lato',sans-serif; font-size:0.68rem; font-weight:700;
+      letter-spacing:0.1em; text-transform:uppercase; padding:6px 14px; cursor:pointer;
+    }
+    .btn-chat-cancel-edit:hover { color:var(--black); border-color:var(--black); }
     
     /* Preview modal */
     .preview-overlay {
@@ -248,7 +287,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-  import { getFirestore, doc, getDoc, collection, addDoc, query, orderBy, onSnapshot, Timestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, collection, addDoc, updateDoc, deleteDoc, query, orderBy, onSnapshot, Timestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
   import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 
   const firebaseConfig = {
@@ -280,13 +319,19 @@
     currentUser = user;
     if (user) {
       isAdmin = user.email === ADMIN_EMAIL;
-      const userData = await getUserData(user.uid);
-      myDisplayName = userData?.displayName || user.displayName || user.email.split('@')[0];
-      canWrite = isAdmin || userData?.canWrite === true;
+      if (isAdmin) canWrite = true;
+      myDisplayName = user.displayName || user.email.split('@')[0];
+      renderChatArea(); // Mostramos algo enseguida
+      try {
+        const userData = await getUserData(user.uid);
+        if (userData?.displayName) myDisplayName = userData.displayName;
+        canWrite = isAdmin || userData?.canWrite === true;
+      } catch (e) {
+        console.warn('Error cargando usuario:', e.message);
+      }
     } else {
       isAdmin = false; canWrite = false; myDisplayName = '';
     }
-    // Re-render chat area when auth changes
     renderChatArea();
   });
 
@@ -382,7 +427,6 @@
           <div class="author-box-bottom-info">
             <div class="author-box-bottom-label">Escrito por</div>
             <div class="author-box-bottom-name">${authorName}</div>
-            <div class="author-box-bottom-email">${authorEmail}</div>
           </div>
         </div>
         
@@ -436,18 +480,69 @@
       const name = m.authorName || m.authorEmail?.split('@')[0] || 'Anónimo';
       const photo = m.authorPhoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=1a1a18&color=f0ede8&size=64`;
       const time = m.timestamp?.toDate ? formatTime(m.timestamp.toDate()) : '';
-      return `<div class="chat-msg">
+      const isOwn = currentUser && m.authorEmail === currentUser.email;
+      const canEdit = isOwn || isAdmin;
+      const editadoBadge = m.edited ? '<span class="chat-edited">editado</span>' : '';
+      const actions = canEdit ? `
+        <div class="chat-msg-actions">
+          <button class="btn-chat-edit" onclick="startEditMsg('${m.id}', \`${escapeForAttr(m.text)}\`)">✏️</button>
+          <button class="btn-chat-delete" onclick="deleteMsg('${m.id}')">🗑️</button>
+        </div>` : '';
+      return `<div class="chat-msg" id="msg-${m.id}">
         <img class="chat-msg-avatar" src="${photo}" alt="${name}" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=ccc&color=333'">
         <div class="chat-msg-content">
           <div class="chat-msg-header">
             <span class="chat-msg-name">${name}</span>
             <span class="chat-msg-time">${time}</span>
+            ${editadoBadge}
+            ${actions}
           </div>
-          <div class="chat-msg-text">${escapeHtml(m.text)}</div>
+          <div class="chat-msg-text" id="text-${m.id}">${escapeHtml(m.text)}</div>
+          <div class="chat-msg-edit-form" id="edit-${m.id}" style="display:none;">
+            <textarea class="chat-edit-input" id="edit-input-${m.id}">${escapeHtml(m.text)}</textarea>
+            <div class="chat-edit-actions">
+              <button class="btn-chat-save" onclick="saveEditMsg('${m.id}')">Guardar</button>
+              <button class="btn-chat-cancel-edit" onclick="cancelEdit('${m.id}')">Cancelar</button>
+            </div>
+          </div>
         </div>
       </div>`;
     }).join('');
   }
+
+  function escapeForAttr(text) {
+    return text.replace(/`/g, '\\`').replace(/\$/g, '\\$');
+  }
+
+  window.startEditMsg = function(id, text) {
+    document.getElementById(`text-${id}`).style.display = 'none';
+    const form = document.getElementById(`edit-${id}`);
+    form.style.display = 'block';
+    const input = document.getElementById(`edit-input-${id}`);
+    input.value = text;
+    input.focus();
+  };
+
+  window.cancelEdit = function(id) {
+    document.getElementById(`text-${id}`).style.display = '';
+    document.getElementById(`edit-${id}`).style.display = 'none';
+  };
+
+  window.saveEditMsg = async function(id) {
+    const input = document.getElementById(`edit-input-${id}`);
+    const text = input.value.trim();
+    if (!text) return;
+    try {
+      await updateDoc(doc(db, 'ideas', ideaId, 'chat', id), { text, edited: true });
+    } catch (err) { alert('Error al editar: ' + err.message); }
+  };
+
+  window.deleteMsg = async function(id) {
+    if (!confirm('¿Borrar este comentario?')) return;
+    try {
+      await deleteDoc(doc(db, 'ideas', ideaId, 'chat', id));
+    } catch (err) { alert('Error al borrar: ' + err.message); }
+  };
 
   function renderChatArea() {
     const wrapper = document.getElementById('chat-input-wrapper');
