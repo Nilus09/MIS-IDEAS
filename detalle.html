@@ -38,8 +38,13 @@
     }
     .author-box-top img {
       width: 42px; height: 42px; border-radius: 50%; object-fit: cover;
-      border: 2px solid var(--border); flex-shrink: 0;
+      border: 3px solid var(--border); flex-shrink: 0;
     }
+    /* Color clases para avatares */
+    .avatar-color-rojo     { border-color: #8b1c1c !important; box-shadow:0 0 0 1px #8b1c1c33; }
+    .avatar-color-azul     { border-color: #1a4b8b !important; box-shadow:0 0 0 1px #1a4b8b33; }
+    .avatar-color-amarillo { border-color: #b8860b !important; box-shadow:0 0 0 1px #b8860b33; }
+    .avatar-color-verde    { border-color: #2e7d32 !important; box-shadow:0 0 0 1px #2e7d3233; }
     .author-box-top-info {}
     .author-box-top-label {
       font-size: 0.6rem; font-weight: 700; letter-spacing: 0.14em;
@@ -133,8 +138,12 @@
     
     .chat-msg-avatar {
       width: 34px; height: 34px; border-radius: 50%; object-fit: cover;
-      border: 1px solid var(--border); flex-shrink: 0; margin-top: 2px;
+      border: 2px solid var(--border); flex-shrink: 0; margin-top: 2px;
     }
+    .chat-msg-avatar.avatar-color-rojo     { border-color:#8b1c1c; box-shadow:0 0 0 1px #8b1c1c33; }
+    .chat-msg-avatar.avatar-color-azul     { border-color:#1a4b8b; box-shadow:0 0 0 1px #1a4b8b33; }
+    .chat-msg-avatar.avatar-color-amarillo { border-color:#b8860b; box-shadow:0 0 0 1px #b8860b33; }
+    .chat-msg-avatar.avatar-color-verde    { border-color:#2e7d32; box-shadow:0 0 0 1px #2e7d3233; }
     .chat-msg-content { flex: 1; }
     .chat-msg-header { display: flex; gap: 10px; align-items: baseline; margin-bottom: 5px; }
     .chat-msg-name { font-size: 0.85rem; font-weight: 700; color: var(--black); }
@@ -310,6 +319,7 @@
   let currentUser = null;
   let isAdmin = false;
   let canWrite = false;
+  let canComment = false;
   let myDisplayName = '';
   let ideaId = null;
   let chatUnsub = null;
@@ -319,18 +329,19 @@
     currentUser = user;
     if (user) {
       isAdmin = user.email === ADMIN_EMAIL;
-      if (isAdmin) canWrite = true;
+      if (isAdmin) { canWrite = true; canComment = true; }
       myDisplayName = user.displayName || user.email.split('@')[0];
-      renderChatArea(); // Mostramos algo enseguida
+      renderChatArea();
       try {
         const userData = await getUserData(user.uid);
         if (userData?.displayName) myDisplayName = userData.displayName;
         canWrite = isAdmin || userData?.canWrite === true;
+        canComment = canWrite || userData?.canComment === true;
       } catch (e) {
         console.warn('Error cargando usuario:', e.message);
       }
     } else {
-      isAdmin = false; canWrite = false; myDisplayName = '';
+      isAdmin = false; canWrite = false; canComment = false; myDisplayName = '';
     }
     renderChatArea();
   });
@@ -377,6 +388,7 @@
       const authorName = ideaData.authorName || ideaData.author?.split('@')[0] || 'Autor';
       const authorPhoto = ideaData.authorPhoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=1a1a18&color=f0ede8`;
       const authorEmail = ideaData.author || '';
+      const authorColor = ideaData.authorColor && ideaData.authorColor !== 'ninguno' ? `avatar-color-${ideaData.authorColor}` : '';
 
       const filesHTML = ideaData.files?.length ? `
         <div class="article-files">
@@ -402,7 +414,7 @@
 
       document.getElementById('article').innerHTML = `
         <div class="author-box-top">
-          <img src="${authorPhoto}" alt="${authorName}" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=1a1a18&color=f0ede8'">
+          <img src="${authorPhoto}" alt="${authorName}" class="${authorColor}" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=1a1a18&color=f0ede8'">
           <div class="author-box-top-info">
             <div class="author-box-top-label">Publicado por</div>
             <div class="author-box-top-name">${authorName}</div>
@@ -423,7 +435,7 @@
         ${filesHTML}
         
         <div class="author-box-bottom">
-          <img src="${authorPhoto}" alt="${authorName}" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=1a1a18&color=f0ede8'">
+          <img src="${authorPhoto}" alt="${authorName}" class="${authorColor}" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=1a1a18&color=f0ede8'">
           <div class="author-box-bottom-info">
             <div class="author-box-bottom-label">Escrito por</div>
             <div class="author-box-bottom-name">${authorName}</div>
@@ -483,13 +495,14 @@
       const isOwn = currentUser && m.authorEmail === currentUser.email;
       const canEdit = isOwn || isAdmin;
       const editadoBadge = m.edited ? '<span class="chat-edited">editado</span>' : '';
+      const colorClass = m.authorColor && m.authorColor !== 'ninguno' ? `avatar-color-${m.authorColor}` : '';
       const actions = canEdit ? `
         <div class="chat-msg-actions">
           <button class="btn-chat-edit" onclick="startEditMsg('${m.id}', \`${escapeForAttr(m.text)}\`)">✏️</button>
           <button class="btn-chat-delete" onclick="deleteMsg('${m.id}')">🗑️</button>
         </div>` : '';
       return `<div class="chat-msg" id="msg-${m.id}">
-        <img class="chat-msg-avatar" src="${photo}" alt="${name}" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=ccc&color=333'">
+        <img class="chat-msg-avatar ${colorClass}" src="${photo}" alt="${name}" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=ccc&color=333'">
         <div class="chat-msg-content">
           <div class="chat-msg-header">
             <span class="chat-msg-name">${name}</span>
@@ -549,10 +562,10 @@
     if (!wrapper) return;
 
     if (!currentUser) {
-      wrapper.innerHTML = `<div class="chat-no-access"><strong>Accede para comentar</strong>Inicia sesión para participar en la conversación.</div>`;
+      wrapper.innerHTML = `<div class="chat-no-access"><strong>Accede para comentar</strong>Inicia sesión para ver la conversación.</div>`;
       return;
     }
-    if (!canWrite) {
+    if (!canWrite && !canComment) {
       wrapper.innerHTML = `<div class="chat-no-access"><strong>Sin acceso al chat</strong>El administrador aún no te ha dado permisos para comentar.</div>`;
       return;
     }
@@ -576,28 +589,33 @@
   };
 
   window.sendMsg = async function() {
-    if (!canWrite || !currentUser || !ideaId) return;
+    if (!canWrite && !canComment) { return; }
+    if (!currentUser || !ideaId) return;
     const textarea = document.getElementById('chat-text');
     const text = textarea.value.trim();
     if (!text) return;
     const btn = document.getElementById('btn-send');
-    btn.disabled = true;
-    textarea.disabled = true;
+    btn.disabled = true; textarea.disabled = true;
     try {
+      // Obtener color actual del usuario
+      let userColor = 'ninguno';
+      try {
+        const ud = await getUserData(currentUser.uid);
+        userColor = ud?.profileColor || 'ninguno';
+      } catch {}
       await addDoc(collection(db, 'ideas', ideaId, 'chat'), {
         text,
         authorEmail: currentUser.email,
         authorName: myDisplayName,
         authorPhoto: currentUser.photoURL || '',
+        authorColor: userColor,
         timestamp: Timestamp.now()
       });
       textarea.value = '';
     } catch (err) {
       alert('Error al enviar: ' + err.message);
     }
-    btn.disabled = false;
-    textarea.disabled = false;
-    textarea.focus();
+    btn.disabled = false; textarea.disabled = false; textarea.focus();
   };
 
   function formatTime(date) {
