@@ -944,6 +944,10 @@
     if (!canWrite) { alert('🔐 Sin permisos.'); return; }
     const post = posts.find(p => p.id === id);
     if (!post) return;
+    // Solo el autor o el admin pueden editar
+    if (!isAdmin && post.author !== currentUser?.email) {
+      alert('Solo puedes editar tus propias ideas.'); return;
+    }
     editingId = id;
     selectedFiles = post.files || [];
     document.getElementById('form-title').textContent = 'Editar idea';
@@ -979,28 +983,50 @@
     const section = document.getElementById('f-sec').value;
     const tagsRaw = document.getElementById('f-tags').value.trim();
     if (!idea || !bodyHTML || bodyHTML === '<br>') { alert('Rellena idea y desarrollo.'); return; }
-    const now = new Date();
-    const date = `${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()} · ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
     const tags = tagsRaw ? tagsRaw.split(',').map(t=>t.trim()).filter(Boolean) : [];
-    const ideaData = {
-      section, date, idea,
-      body: bodyHTML,  // Guardamos el HTML directamente con todo el formato
-      tags,
-      files: selectedFiles,
-      timestamp: Timestamp.now(),
-      author: currentUser.email,
-      authorName: myDisplayName,
-      authorPhoto: currentUser.photoURL || '',
-      authorColor: myProfileColor || 'ninguno'
-    };
+
     try {
       const btn = document.getElementById('btn-publish');
       btn.textContent = 'Guardando...'; btn.disabled = true;
+
       if (editingId) {
-        await updateDoc(doc(db, "ideas", editingId), ideaData);
+        // Al editar: conservamos la fecha original y añadimos esta edición al historial
+        const existing = posts.find(p => p.id === editingId);
+        const editEntry = {
+          editedAt: Timestamp.now(),
+          editedBy: myDisplayName
+        };
+        const editHistory = [...(existing?.editHistory || []), editEntry];
+
+        await updateDoc(doc(db, "ideas", editingId), {
+          section, idea,
+          body: bodyHTML,
+          tags,
+          files: selectedFiles,
+          authorName: myDisplayName,
+          authorPhoto: currentUser.photoURL || '',
+          authorColor: myProfileColor || 'ninguno',
+          editHistory
+          // 'date' y 'timestamp' originales NO se tocan
+        });
       } else {
-        await addDoc(collection(db, "ideas"), ideaData);
+        // Nueva idea: guardamos fecha y timestamp normalmente
+        const now = new Date();
+        const date = `${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()} · ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+        await addDoc(collection(db, "ideas"), {
+          section, date, idea,
+          body: bodyHTML,
+          tags,
+          files: selectedFiles,
+          timestamp: Timestamp.now(),
+          author: currentUser.email,
+          authorName: myDisplayName,
+          authorPhoto: currentUser.photoURL || '',
+          authorColor: myProfileColor || 'ninguno',
+          editHistory: []
+        });
       }
+
       btn.textContent = editingId ? 'Actualizar' : 'Publicar';
       btn.disabled = false;
       close_('form-overlay');
