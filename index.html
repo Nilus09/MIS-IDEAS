@@ -48,9 +48,13 @@
     
     .user-avatar {
       width: 36px; height: 36px; border-radius: 50%; object-fit: cover;
-      border: 2px solid rgba(255,255,255,0.3); transition: border-color 0.2s; cursor: pointer;
+      border: 3px solid rgba(255,255,255,0.3); transition: border-color 0.2s; cursor: pointer;
     }
     .user-avatar:hover { border-color: rgba(255,255,255,0.7); }
+    .user-avatar.color-rojo   { border-color: #8b1c1c !important; box-shadow: 0 0 0 1px #8b1c1c44; }
+    .user-avatar.color-azul   { border-color: #1a4b8b !important; box-shadow: 0 0 0 1px #1a4b8b44; }
+    .user-avatar.color-amarillo { border-color: #b8860b !important; box-shadow: 0 0 0 1px #b8860b44; }
+    .user-avatar.color-verde  { border-color: #2e7d32 !important; box-shadow: 0 0 0 1px #2e7d3244; }
     
     .user-status {
       display: flex; align-items: center; gap: 6px; padding: 4px 10px;
@@ -175,19 +179,38 @@
       display:inline-block; padding:3px 10px; border-radius:20px; font-size:0.65rem;
       font-weight:700; letter-spacing:0.1em; text-transform:uppercase;
     }
-    .permission-badge.yes { background:#e8f5e9; color:#2e7d32; }
-    .permission-badge.no { background:#fce4ec; color:#c62828; }
-    .permission-badge.admin { background:#1a1a18; color:#f0ede8; }
-    
-    .btn-toggle {
-      background:var(--black); color:white; border:none;
-      font-family:'Lato',sans-serif; font-size:0.65rem; font-weight:700;
-      letter-spacing:0.1em; text-transform:uppercase; padding:6px 14px;
-      cursor:pointer; transition:background 0.2s; border-radius:3px;
+    .permission-badge.yes    { background:#e8f5e9; color:#2e7d32; }
+    .permission-badge.comment{ background:#e3f2fd; color:#1565c0; }
+    .permission-badge.no     { background:#fce4ec; color:#c62828; }
+    .permission-badge.admin  { background:#1a1a18; color:#f0ede8; }
+
+    /* Online dot */
+    .online-dot {
+      display:inline-block; width:8px; height:8px; border-radius:50%;
+      flex-shrink:0; margin-right:2px;
     }
-    .btn-toggle:hover { background:var(--red); }
-    .btn-toggle.revoke { background:var(--mid); }
-    .btn-toggle.revoke:hover { background:var(--red); }
+    .online-dot.online  { background:#4CAF50; box-shadow:0 0 5px rgba(76,175,80,0.7); }
+    .online-dot.offline { background:#bbb; }
+
+    /* User color dot en tabla */
+    .user-color-dot {
+      width:10px; height:10px; border-radius:50%; display:inline-block;
+      flex-shrink:0; border:1px solid rgba(0,0,0,0.1);
+    }
+
+    /* Botones de permiso múltiple */
+    .perm-btns { display:flex; gap:6px; flex-wrap:wrap; }
+    .btn-perm {
+      border:none; font-family:'Lato',sans-serif; font-size:0.62rem; font-weight:700;
+      letter-spacing:0.08em; text-transform:uppercase; padding:5px 10px;
+      cursor:pointer; transition:all 0.2s; border-radius:3px; white-space:nowrap;
+    }
+    .btn-perm.grant-comment { background:#e3f2fd; color:#1565c0; }
+    .btn-perm.grant-comment:hover { background:#1565c0; color:white; }
+    .btn-perm.grant-write   { background:#e8f5e9; color:#2e7d32; }
+    .btn-perm.grant-write:hover { background:#2e7d32; color:white; }
+    .btn-perm.revoke-all    { background:#fce4ec; color:#c62828; }
+    .btn-perm.revoke-all:hover { background:#c62828; color:white; }
     
     /* ---- MODALS ---- */
     .overlay {
@@ -261,7 +284,7 @@
     
     /* ---- MODAL NOMBRE ---- */
     .name-modal-box {
-      background: white; max-width: 420px; width: 100%;
+      background: white; max-width: 460px; width: 100%;
       border-top: 4px solid var(--red); position: relative;
       box-shadow: 0 20px 60px rgba(0,0,0,0.25); animation: up 0.25s ease;
       padding: 30px 32px;
@@ -271,7 +294,7 @@
       color: var(--black); margin-bottom: 6px;
     }
     .name-modal-box p { font-size: 0.82rem; color: var(--mid); margin-bottom: 20px; line-height:1.5; }
-    .name-input-row { display:flex; gap:8px; }
+    .name-input-row { display:flex; gap:8px; margin-bottom:22px; }
     .name-input-row input {
       flex:1; border:1px solid var(--border); border-bottom-width:2px; background:var(--bg);
       color:var(--black); font-family:'Lato',sans-serif; font-size:0.95rem; padding:10px 12px;
@@ -284,6 +307,29 @@
       padding:10px 18px; cursor:pointer; transition:background 0.2s; white-space:nowrap;
     }
     .btn-save-name:hover { background:var(--red); }
+
+    /* Color picker */
+    .color-picker-label {
+      font-size:0.65rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;
+      color:var(--mid); margin-bottom:10px; display:block;
+    }
+    .color-options { display:flex; gap:12px; }
+    .color-opt {
+      width:36px; height:36px; border-radius:50%; cursor:pointer;
+      border:3px solid transparent; transition:all 0.2s; position:relative;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .color-opt:hover { transform:scale(1.1); }
+    .color-opt.selected { border-color: var(--black) !important; }
+    .color-opt.selected::after {
+      content:'✓'; color:white; font-size:0.85rem; font-weight:900;
+      text-shadow:0 1px 2px rgba(0,0,0,0.5);
+    }
+    .color-opt[data-color="ninguno"]  { background: #ccc8c0; border-color:#ccc8c0; }
+    .color-opt[data-color="rojo"]     { background: #8b1c1c; }
+    .color-opt[data-color="azul"]     { background: #1a4b8b; }
+    .color-opt[data-color="amarillo"] { background: #b8860b; }
+    .color-opt[data-color="verde"]    { background: #2e7d32; }
     
     @keyframes up { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
     ::-webkit-scrollbar { width:4px; }
@@ -447,11 +493,19 @@
 <div class="overlay" id="name-overlay" onclick="closeIfOutside(event,'name-overlay')">
   <div class="name-modal-box">
     <button class="modal-close" onclick="close_('name-overlay')">✕</button>
-    <h2>Tu nombre público</h2>
-    <p>Este nombre aparecerá como autor en las ideas que publiques. Haz clic en tu foto de perfil para cambiarlo.</p>
+    <h2>Tu perfil público</h2>
+    <p>Tu nombre y color aparecerán como autor. Haz clic en tu foto del header para editar.</p>
     <div class="name-input-row">
       <input id="custom-name-input" type="text" placeholder="Tu nombre...">
       <button class="btn-save-name" onclick="saveName()">Guardar</button>
+    </div>
+    <span class="color-picker-label">Color de tu borde</span>
+    <div class="color-options">
+      <div class="color-opt" data-color="ninguno" onclick="selectColor('ninguno')" title="Sin color"></div>
+      <div class="color-opt" data-color="rojo"     onclick="selectColor('rojo')"     title="Rojo"></div>
+      <div class="color-opt" data-color="azul"     onclick="selectColor('azul')"     title="Azul"></div>
+      <div class="color-opt" data-color="amarillo" onclick="selectColor('amarillo')" title="Amarillo"></div>
+      <div class="color-opt" data-color="verde"    onclick="selectColor('verde')"    title="Verde"></div>
     </div>
   </div>
 </div>
@@ -487,7 +541,9 @@
   let currentUser = null;
   let isAdmin = false;
   let canWrite = false;
+  let canComment = false;
   let myDisplayName = '';
+  let myProfileColor = 'ninguno';
   let editingId = null;
   let selectedFiles = [];
 
@@ -511,23 +567,31 @@
     currentUser = user;
     if (user) {
       isAdmin = user.email === ADMIN_EMAIL;
-      // Si ya es admin, puede escribir directamente sin esperar Firestore
-      if (isAdmin) canWrite = true;
+      if (isAdmin) { canWrite = true; canComment = true; }
       myDisplayName = user.displayName || user.email.split('@')[0];
-      updateUI(); // Actualizamos UI enseguida para quitar el botón "Acceder"
+      updateUI();
       try {
         await registerUser(user);
         const userData = await getUserData(user.uid);
         if (userData?.displayName) myDisplayName = userData.displayName;
+        myProfileColor = userData?.profileColor || 'ninguno';
         canWrite = isAdmin || userData?.canWrite === true;
-        updateUI(); // Actualizamos de nuevo con los datos completos
+        canComment = canWrite || userData?.canComment === true;
+        // Actualizar lastSeen
+        await updateDoc(doc(db, 'usuarios', user.uid), { lastSeen: Timestamp.now() });
+        // Seguir actualizando cada 60s mientras está en la página
+        setInterval(async () => {
+          if (auth.currentUser) {
+            try { await updateDoc(doc(db, 'usuarios', auth.currentUser.uid), { lastSeen: Timestamp.now() }); } catch {}
+          }
+        }, 60000);
+        updateUI();
       } catch (e) {
-        console.warn('Error al cargar datos de usuario (¿reglas actualizadas?):', e.message);
+        console.warn('Error al cargar datos de usuario:', e.message);
       }
     } else {
-      isAdmin = false;
-      canWrite = false;
-      myDisplayName = '';
+      isAdmin = false; canWrite = false; canComment = false;
+      myDisplayName = ''; myProfileColor = 'ninguno';
       updateUI();
     }
     cargarIdeas();
@@ -543,10 +607,12 @@
         displayName: user.displayName || user.email.split('@')[0],
         photoURL: user.photoURL || '',
         canWrite: false,
+        canComment: false,
+        profileColor: 'ninguno',
+        lastSeen: Timestamp.now(),
         firstSeen: Timestamp.now()
       });
     } else {
-      // Update photo if changed
       await updateDoc(ref, {
         email: user.email,
         photoURL: user.photoURL || snap.data().photoURL || ''
@@ -575,6 +641,8 @@
       userDisplay.style.display = 'flex';
       userAvatar.src = currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=1a1a18&color=f0ede8`;
       userDisplayName.textContent = myDisplayName;
+      // Aplicar color de borde al avatar del header
+      userAvatar.className = 'user-avatar' + (myProfileColor && myProfileColor !== 'ninguno' ? ` color-${myProfileColor}` : '');
     } else {
       btnLogin.style.display = 'inline-block';
       userDisplay.style.display = 'none';
@@ -592,34 +660,48 @@
       navUsuarios.classList.add('visible');
     } else {
       navUsuarios.classList.remove('visible');
-      // Hide users panel if it was open
       document.getElementById('section-usuarios').classList.remove('visible');
     }
   }
 
-  // ——— NOMBRE PERSONALIZADO ———
+  // ——— NOMBRE Y COLOR ———
+  let selectedColor = 'ninguno';
+
   window.openNameModal = function() {
     if (!currentUser) return;
     document.getElementById('custom-name-input').value = myDisplayName;
+    selectedColor = myProfileColor || 'ninguno';
+    // Marcar color seleccionado
+    document.querySelectorAll('.color-opt').forEach(el => {
+      el.classList.toggle('selected', el.dataset.color === selectedColor);
+    });
     open_('name-overlay');
+  };
+
+  window.selectColor = function(color) {
+    selectedColor = color;
+    document.querySelectorAll('.color-opt').forEach(el => {
+      el.classList.toggle('selected', el.dataset.color === color);
+    });
   };
 
   window.saveName = async function() {
     const name = document.getElementById('custom-name-input').value.trim();
     if (!name) { alert('Escribe un nombre.'); return; }
     try {
-      // Actualizar nombre en perfil
-      await updateDoc(doc(db, 'usuarios', currentUser.uid), { displayName: name });
+      await updateDoc(doc(db, 'usuarios', currentUser.uid), { displayName: name, profileColor: selectedColor });
       myDisplayName = name;
+      myProfileColor = selectedColor;
       document.getElementById('user-display-name').textContent = name;
 
       // Actualizar nombre en todas las ideas de este usuario
       const snap = await getDocs(collection(db, 'ideas'));
-      const miasIdeas = snap.docs.filter(d => d.data().author === currentUser.email);
-      await Promise.all(miasIdeas.map(d => updateDoc(doc(db, 'ideas', d.id), { authorName: name })));
+      const misIdeas = snap.docs.filter(d => d.data().author === currentUser.email);
+      await Promise.all(misIdeas.map(d => updateDoc(doc(db, 'ideas', d.id), { authorName: name, authorColor: selectedColor })));
 
+      updateUI(); // Actualizar borde del avatar
       close_('name-overlay');
-      await cargarIdeas(); // Refrescar tarjetas
+      await cargarIdeas();
     } catch (err) {
       alert('Error al guardar: ' + err.message);
     }
@@ -642,46 +724,64 @@
       container.innerHTML = '<p style="color:var(--mid);font-style:italic">No hay usuarios registrados aún.</p>';
       return;
     }
+    const now = Date.now();
+    const ONLINE_THRESHOLD = 2 * 60 * 1000; // 2 minutos
+
+    const COLORS = { rojo:'#8b1c1c', azul:'#1a4b8b', amarillo:'#b8860b', verde:'#2e7d32', ninguno:'#ccc8c0' };
+
     container.innerHTML = `
       <table class="user-table">
         <thead>
           <tr>
             <th>Usuario</th>
+            <th>Estado</th>
             <th>Permiso</th>
-            <th>Acción</th>
+            <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
           ${usuarios.map(u => {
             const isAdminUser = u.email === ADMIN_EMAIL;
+            const color = COLORS[u.profileColor] || COLORS.ninguno;
             const avatar = u.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.displayName||'?')}&background=1a1a18&color=f0ede8`;
+            const lastSeenMs = u.lastSeen?.toMillis?.() || 0;
+            const isOnline = lastSeenMs && (now - lastSeenMs) < ONLINE_THRESHOLD;
+            const onlineText = isOnline ? 'Conectado' : (lastSeenMs ? 'Desconectado' : 'Nunca');
+
+            let badge = '';
+            if (isAdminUser) badge = '<span class="permission-badge admin">Admin</span>';
+            else if (u.canWrite) badge = '<span class="permission-badge yes">Puede escribir</span>';
+            else if (u.canComment) badge = '<span class="permission-badge comment">Solo comentar</span>';
+            else badge = '<span class="permission-badge no">Solo lectura</span>';
+
+            let actions = '—';
+            if (!isAdminUser) {
+              actions = `<div class="perm-btns">
+                ${!u.canComment && !u.canWrite ? `<button class="btn-perm grant-comment" onclick="setPermiso('${u.uid}','comment')">💬 Comentar</button>` : ''}
+                ${!u.canWrite ? `<button class="btn-perm grant-write" onclick="setPermiso('${u.uid}','write')">✍️ Escribir</button>` : ''}
+                ${(u.canComment || u.canWrite) ? `<button class="btn-perm revoke-all" onclick="setPermiso('${u.uid}','none')">⛔ Quitar</button>` : ''}
+              </div>`;
+            }
+
             return `
               <tr>
                 <td>
                   <div class="user-row-info">
-                    <img src="${avatar}" alt="">
+                    <div style="position:relative;flex-shrink:0;">
+                      <img src="${avatar}" alt="" style="width:28px;height:28px;border-radius:50%;object-fit:cover;border:2px solid ${color};">
+                      <span class="online-dot ${isOnline ? 'online' : 'offline'}" style="position:absolute;bottom:-1px;right:-1px;width:9px;height:9px;border:1.5px solid white;border-radius:50%;"></span>
+                    </div>
                     <div>
                       <div class="user-row-name">${u.displayName || '—'}</div>
                       <div class="user-row-email">${u.email}</div>
                     </div>
                   </div>
                 </td>
-                <td>
-                  ${isAdminUser
-                    ? '<span class="permission-badge admin">Admin</span>'
-                    : u.canWrite
-                      ? '<span class="permission-badge yes">Puede escribir</span>'
-                      : '<span class="permission-badge no">Solo lectura</span>'
-                  }
+                <td style="font-size:0.75rem;color:${isOnline ? '#2e7d32' : 'var(--mid)'};">
+                  ${onlineText}
                 </td>
-                <td>
-                  ${isAdminUser
-                    ? '—'
-                    : `<button class="btn-toggle ${u.canWrite ? 'revoke' : ''}" onclick="togglePermiso('${u.uid}', ${u.canWrite})">
-                        ${u.canWrite ? '⛔ Quitar permiso' : '✅ Dar permiso'}
-                      </button>`
-                  }
-                </td>
+                <td>${badge}</td>
+                <td>${actions}</td>
               </tr>
             `;
           }).join('')}
@@ -690,10 +790,14 @@
     `;
   }
 
-  window.togglePermiso = async function(uid, currentPerm) {
+  window.setPermiso = async function(uid, level) {
     try {
-      await updateDoc(doc(db, 'usuarios', uid), { canWrite: !currentPerm });
-      await loadUsuarios(); // Refresh
+      const updates = {
+        canWrite:   level === 'write',
+        canComment: level === 'write' || level === 'comment'
+      };
+      await updateDoc(doc(db, 'usuarios', uid), updates);
+      await loadUsuarios();
     } catch (err) {
       alert('Error: ' + err.message);
     }
