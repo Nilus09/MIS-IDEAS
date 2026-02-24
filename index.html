@@ -45,16 +45,31 @@
     .btn-logout:hover { background:rgba(255,255,255,0.1); color:#f0ede8; }
     
     .user-display { display: flex; align-items: center; gap: 10px; }
-    
+
+    .user-avatar-wrap {
+      position: relative; cursor: pointer; display: flex; flex-direction: column;
+      align-items: center; gap: 3px;
+    }
     .user-avatar {
       width: 36px; height: 36px; border-radius: 50%; object-fit: cover;
-      border: 3px solid rgba(255,255,255,0.3); transition: border-color 0.2s; cursor: pointer;
+      border: 3px solid rgba(255,255,255,0.3); transition: border-color 0.2s;
     }
-    .user-avatar:hover { border-color: rgba(255,255,255,0.7); }
-    .user-avatar.color-rojo   { border-color: #8b1c1c !important; box-shadow: 0 0 0 1px #8b1c1c44; }
-    .user-avatar.color-azul   { border-color: #1a4b8b !important; box-shadow: 0 0 0 1px #1a4b8b44; }
+    .user-avatar-wrap:hover .user-avatar { border-color: rgba(255,255,255,0.7); }
+    .user-avatar.color-rojo     { border-color: #8b1c1c !important; box-shadow: 0 0 0 1px #8b1c1c44; }
+    .user-avatar.color-azul     { border-color: #1a4b8b !important; box-shadow: 0 0 0 1px #1a4b8b44; }
     .user-avatar.color-amarillo { border-color: #b8860b !important; box-shadow: 0 0 0 1px #b8860b44; }
-    .user-avatar.color-verde  { border-color: #2e7d32 !important; box-shadow: 0 0 0 1px #2e7d3244; }
+    .user-avatar.color-verde    { border-color: #2e7d32 !important; box-shadow: 0 0 0 1px #2e7d3244; }
+
+    .user-role-badge {
+      font-size: 0.5rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+      padding: 1px 6px; border-radius: 20px; white-space: nowrap; display: none;
+    }
+    .user-role-badge.admin {
+      display: inline-block; background: #f0ede8; color: #1a1a18;
+    }
+    .user-role-badge.colaborador {
+      display: inline-block; background: var(--red); color: #f0ede8;
+    }
     
     .user-status {
       display: flex; align-items: center; gap: 6px; padding: 4px 10px;
@@ -405,7 +420,10 @@
   </div>
   <div class="auth-buttons">
     <div id="user-display" class="user-display" style="display:none;">
-      <img id="user-avatar" class="user-avatar" src="" alt="Perfil" onclick="openNameModal()" title="Cambiar nombre">
+      <div class="user-avatar-wrap" onclick="openNameModal()" title="Cambiar nombre">
+        <img id="user-avatar" class="user-avatar" src="" alt="Perfil">
+        <span id="user-role-badge" class="user-role-badge"></span>
+      </div>
       <span class="user-status" id="user-display-name">Conectado</span>
       <button class="btn-logout" onclick="logout()">Salir</button>
     </div>
@@ -682,8 +700,17 @@
       userDisplay.style.display = 'flex';
       userAvatar.src = currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=1a1a18&color=f0ede8`;
       userDisplayName.textContent = myDisplayName;
-      // Aplicar color de borde al avatar del header
+      // Color de borde
       userAvatar.className = 'user-avatar' + (myProfileColor && myProfileColor !== 'ninguno' ? ` color-${myProfileColor}` : '');
+      // Badge de rol
+      const badge = document.getElementById('user-role-badge');
+      if (isAdmin) {
+        badge.textContent = 'Admin'; badge.className = 'user-role-badge admin';
+      } else if (canWrite) {
+        badge.textContent = 'Colaborador'; badge.className = 'user-role-badge colaborador';
+      } else {
+        badge.className = 'user-role-badge';
+      }
     } else {
       btnLogin.style.display = 'inline-block';
       userDisplay.style.display = 'none';
