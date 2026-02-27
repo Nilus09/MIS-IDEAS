@@ -37,6 +37,16 @@
     .btn-login:hover { background:#3367d6; }
     .btn-login img { width:18px; height:18px; }
     
+    .btn-bell {
+      background: transparent; border: 1px solid rgba(255,255,255,0.3);
+      color: rgba(240,237,232,0.8); font-size: 1rem; width: 36px; height: 36px;
+      border-radius: 50%; cursor: pointer; transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center; padding: 0;
+    }
+    .btn-bell:hover { background: rgba(255,255,255,0.1); color: #f0ede8; }
+    .btn-bell.subscribed { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.6); }
+    .btn-bell.subscribed::after { content: ''; position: absolute; top: 2px; right: 2px; width: 8px; height: 8px; background: #4CAF50; border-radius: 50%; border: 1.5px solid var(--black); }
+    .btn-bell { position: relative; }
     .btn-logout {
       background:transparent; color:rgba(240,237,232,0.7); border:1px solid rgba(255,255,255,0.3);
       font-family:'Lato',sans-serif; font-size:0.7rem; font-weight:700;
@@ -70,6 +80,19 @@
     .user-role-badge.colaborador {
       display: inline-block; background: var(--red); color: #f0ede8;
     }
+
+    /* ---- CAMPANITA ---- */
+    .btn-bell {
+      background: transparent; border: 1px solid rgba(255,255,255,0.3);
+      color: rgba(240,237,232,0.8); font-size: 1rem; padding: 7px 11px;
+      cursor: pointer; border-radius: 4px; transition: all 0.2s;
+      display: none; position: relative;
+    }
+    .btn-bell:hover { background: rgba(255,255,255,0.1); color: #f0ede8; }
+    .btn-bell.subscribed { border-color: #4CAF50; color: #4CAF50; }
+    .btn-bell.subscribed:hover { background: rgba(76,175,80,0.15); }
+    .btn-bell.show { display: inline-flex; align-items: center; gap: 5px; }
+    .btn-bell-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
     
     .user-status {
       display: flex; align-items: center; gap: 6px; padding: 4px 10px;
@@ -425,11 +448,16 @@
         <span id="user-role-badge" class="user-role-badge"></span>
       </div>
       <span class="user-status" id="user-display-name">Conectado</span>
+      <button id="btn-bell" class="btn-bell" onclick="toggleNotificaciones()" title="Notificaciones">🔔</button>
       <button class="btn-logout" onclick="logout()">Salir</button>
     </div>
     <button id="btn-login" class="btn-login" onclick="loginWithGoogle()">
       <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G">
       Acceder
+    </button>
+    <button id="btn-bell" class="btn-bell" onclick="toggleNotificaciones()" title="Notificaciones">
+      <span id="bell-icon">🔔</span>
+      <span class="btn-bell-label" id="bell-label">Avisos</span>
     </button>
     <button id="btn-new-idea" class="btn-new" onclick="openForm()" style="display:none;">+ Nueva idea</button>
   </div>
@@ -571,8 +599,9 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-  import { getFirestore, collection, addDoc, getDocs, query, orderBy, Timestamp, doc, updateDoc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+  import { getFirestore, collection, addDoc, getDocs, query, orderBy, Timestamp, doc, updateDoc, setDoc, getDoc, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
   import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+  import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging.js";
   import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
   const firebaseConfig = {
@@ -595,6 +624,96 @@
   const db = getFirestore(app);
   const auth = getAuth(app);
   const provider = new GoogleAuthProvider();
+  const messaging = getMessaging(app);
+
+  // VAPID key — la obtienes en Firebase Console → Project Settings → Cloud Messaging → Web Push certificates
+  const VAPID_KEY = 'BFcNMT2s4quHl7FcOIZ5drfhMmNh2RsL5kab59m9ONV8mVxKOcQmYkqDhBnyWgr6J1RHYbp9x-CM6fjCl3otijk';
+
+  // ——— NOTIFICACIONES ———
+  async function initMessaging() {
+    try {
+      // Registrar el service worker
+      const sw = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+      // Escuchar mensajes cuando la app está abierta
+      onMessage(messaging, (payload) => {
+        const { title, body } = payload.notification;
+        const link = payload.webpush?.fcm_options?.link;
+        // Mostrar notificación in-app sencilla
+        const div = document.createElement('div');
+        div.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#1a1a18;color:#f0ede8;padding:14px 18px;max-width:320px;z-index:9999;box-shadow:0 8px 32px rgba(0,0,0,0.4);border-left:4px solid #8b1c1c;cursor:pointer;font-family:Lato,sans-serif;font-size:0.88rem;line-height:1.4;';
+        div.innerHTML = `<strong style="display:block;margin-bottom:4px;">${title}</strong>${body}`;
+        if (link) div.onclick = () => window.location.href = link;
+        document.body.appendChild(div);
+        setTimeout(() => div.remove(), 6000);
+      });
+    } catch (e) {
+      console.warn('Service worker no disponible:', e.message);
+    }
+  }
+
+  async function getNotifToken() {
+    try {
+      const token = await getToken(messaging, { vapidKey: VAPID_KEY });
+      return token;
+    } catch { return null; }
+  }
+
+  async function isSubscribed() {
+    if (!currentUser) return false;
+    try {
+      const snap = await getDocs(query(collection(db, 'notif_tokens')));
+      const token = await getNotifToken();
+      return token ? snap.docs.some(d => d.data().token === token) : false;
+    } catch { return false; }
+  }
+
+  async function updateBellUI() {
+    const btn = document.getElementById('btn-bell');
+    if (!btn || !currentUser) return;
+    const subscribed = await isSubscribed();
+    if (subscribed) {
+      btn.classList.add('subscribed');
+      btn.textContent = '🔔';
+      btn.title = 'Notificaciones activadas (clic para desactivar)';
+    } else {
+      btn.classList.remove('subscribed');
+      btn.textContent = '🔕';
+      btn.title = 'Activar notificaciones';
+    }
+  }
+
+  window.toggleNotificaciones = async function() {
+    if (!currentUser) return;
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+      alert('Debes permitir las notificaciones en el navegador para activar los avisos.');
+      return;
+    }
+    const token = await getNotifToken();
+    if (!token) { alert('No se pudo obtener el token. Inténtalo de nuevo.'); return; }
+
+    const subscribed = await isSubscribed();
+    if (subscribed) {
+      // Desuscribirse: borrar token de Firestore
+      const snap = await getDocs(collection(db, 'notif_tokens'));
+      const toDelete = snap.docs.filter(d => d.data().token === token);
+      await Promise.all(toDelete.map(d => deleteDoc(doc(db, 'notif_tokens', d.id))));
+    } else {
+      // Suscribirse: guardar token
+      await addDoc(collection(db, 'notif_tokens'), {
+        token,
+        uid: currentUser.uid,
+        email: currentUser.email,
+        createdAt: Timestamp.now()
+      });
+    }
+    await updateBellUI();
+  };
+
+  // Iniciar messaging al cargar
+  if ('serviceWorker' in navigator && 'Notification' in window) {
+    initMessaging();
+  }
 
   let posts = [];
   let currentUser = null;
@@ -645,6 +764,7 @@
           }
         }, 60000);
         updateUI();
+        updateBellUI();
       } catch (e) {
         console.warn('Error al cargar datos de usuario:', e.message);
       }
