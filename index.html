@@ -562,8 +562,8 @@
   async function updateBellUI() {
     const btn = document.getElementById('btn-bell');
     if (!btn || !currentUser) return;
-    if (!messaging) { btn.style.display = 'none'; return; }
-    btn.style.display = 'flex';
+    btn.style.display = 'flex'; // siempre visible cuando hay sesión
+    if (!messaging) { btn.title = 'Notificaciones no disponibles en este navegador'; return; }
     try {
       const token = await getNotifToken();
       if (!token) { btn.classList.remove('subscribed'); return; }
@@ -575,7 +575,8 @@
   }
 
   window.toggleNotificaciones = async function() {
-    if (!currentUser || !messaging) return;
+    if (!currentUser) return;
+    if (!messaging) { alert('Las notificaciones push no están disponibles en este navegador. Prueba con Chrome en Android o en escritorio.'); return; }
     const btn = document.getElementById('btn-bell');
     btn.disabled = true;
     try {
