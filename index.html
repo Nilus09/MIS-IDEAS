@@ -179,6 +179,13 @@
       cursor:pointer; transition:all 0.2s; border-radius:3px;
     }
     .btn-edit:hover { background:var(--border); }
+    .btn-delete {
+      background:var(--bg2); border:1px solid var(--border); color:var(--red);
+      font-family:'Lato',sans-serif; font-size:0.65rem; font-weight:700;
+      letter-spacing:0.1em; text-transform:uppercase; padding:6px 12px;
+      cursor:pointer; transition:all 0.2s; border-radius:3px;
+    }
+    .btn-delete:hover { background:#fce4ec; border-color:var(--red); }
     .empty { font-size:0.82rem; color:var(--mid); font-style:italic; padding:18px 20px; border:1px dashed var(--border); background:white; }
     
     #section-usuarios { display:none; }
@@ -778,6 +785,7 @@
               <div class="card-tags">${(p.tags||[]).map(t=>`<span class="tag">${t}</span>`).join('')}</div>
               <div class="card-actions">
                 ${(isAdmin || (canWrite && p.author === currentUser?.email)) ? `<button class="btn-edit" onclick="event.stopPropagation();event.preventDefault();editIdea('${p.id}')">✏️ Editar</button>` : ''}
+                ${(isAdmin || (canWrite && p.author === currentUser?.email)) ? `<button class="btn-delete" onclick="event.stopPropagation();event.preventDefault();deleteIdea('${p.id}')">🗑️ Borrar</button>` : ''}
               </div>
               <div class="card-footer">
                 <div class="card-author-bottom"><img src="${authorPhoto}" alt="" onerror="this.style.display='none'"> Por ${authorName}</div>
@@ -788,6 +796,18 @@
         : `<div class="empty">Sin entradas aún.</div>`;
     });
   }
+
+  window.deleteIdea = async function(id) {
+    if (!canWrite) { alert('🔐 Sin permisos.'); return; }
+    const post = posts.find(p => p.id === id);
+    if (!post) return;
+    if (!isAdmin && post.author !== currentUser?.email) { alert('Solo puedes borrar tus propias ideas.'); return; }
+    if (!confirm(`¿Borrar la idea "${post.idea}"? Esta acción no se puede deshacer.`)) return;
+    try {
+      await deleteDoc(doc(db, 'ideas', id));
+      await cargarIdeas();
+    } catch (err) { alert('Error al borrar: ' + err.message); }
+  };
 
   window.editIdea = async function(id) {
     if (!canWrite) { alert('🔐 Sin permisos.'); return; }
