@@ -392,7 +392,7 @@
       <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G">
       Acceder
     </button>
-    <a href="https://t.me/+6d1mQnI_ElplNmNk" target="_blank" id="btn-telegram" class="btn-telegram" style="display:none;">Notificaciones</a>
+    <a href="https://t.me/+6d1mQnI_ElplNmNk" target="_blank" id="btn-telegram" class="btn-telegram" style="display:none;">✈️ Notificaciones</a>
     <button id="btn-new-idea" class="btn-new" onclick="openForm()" style="display:none;">+ Nueva idea</button>
   </div>
 </header>
@@ -670,7 +670,17 @@
         const avatar = u.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.displayName||'?')}&background=1a1a18&color=f0ede8`;
         const lastSeenMs = u.lastSeen?.toMillis?.() || 0;
         const isOnline = lastSeenMs && (now - lastSeenMs) < ONLINE_THR;
-        const onlineText = isOnline ? 'Conectado' : (lastSeenMs ? 'Desconectado' : 'Nunca');
+        const timeAgo = (ms) => {
+          if (!ms) return 'Nunca';
+          const diff = now - ms;
+          if (diff < 60000) return 'Ahora mismo';
+          if (diff < 3600000) return `hace ${Math.floor(diff/60000)} min`;
+          if (diff < 86400000) return `hace ${Math.floor(diff/3600000)}h`;
+          if (diff < 604800000) return `hace ${Math.floor(diff/86400000)} día${Math.floor(diff/86400000)>1?'s':''}`;
+          if (diff < 2592000000) return `hace ${Math.floor(diff/604800000)} semana${Math.floor(diff/604800000)>1?'s':''}`;
+          return `hace ${Math.floor(diff/2592000000)} mes${Math.floor(diff/2592000000)>1?'es':''}`;
+        };
+        const onlineText = isOnline ? 'Ahora mismo' : timeAgo(lastSeenMs);
         const badge = isAdminUser ? '<span class="permission-badge admin">Admin</span>'
           : u.canWrite ? '<span class="permission-badge yes">Puede escribir</span>'
           : u.canComment ? '<span class="permission-badge comment">Solo comentar</span>'
