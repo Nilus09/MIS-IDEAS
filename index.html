@@ -44,19 +44,14 @@
     }
     .btn-logout:hover { background:rgba(255,255,255,0.1); color:#f0ede8; }
 
-    .btn-bell {
-      background: transparent; border: 1px solid rgba(255,255,255,0.3);
-      color: rgba(240,237,232,0.7); font-size: 1rem; width: 38px; height: 38px;
-      border-radius: 50%; cursor: pointer; transition: all 0.2s; position: relative;
-      display: flex; align-items: center; justify-content: center; padding: 0;
+    .btn-telegram {
+      background: #2ca5e0; color: white; border: none; border-radius: 4px;
+      font-family: 'Lato', sans-serif; font-size: 0.72rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase; padding: 9px 16px;
+      text-decoration: none; display: flex; align-items: center; gap: 6px;
+      transition: background 0.2s; white-space: nowrap;
     }
-    .btn-bell:hover { background: rgba(255,255,255,0.1); color: #f0ede8; border-color: rgba(255,255,255,0.6); }
-    .btn-bell.subscribed { border-color: #4CAF50; color: #f0ede8; }
-    .btn-bell.subscribed::after {
-      content: ''; position: absolute; top: 1px; right: 1px;
-      width: 9px; height: 9px; background: #4CAF50;
-      border-radius: 50%; border: 1.5px solid var(--black);
-    }
+    .btn-telegram:hover { background: #1a8fc7; }
     
     .user-display { display: flex; align-items: center; gap: 10px; }
 
@@ -397,7 +392,7 @@
       <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G">
       Acceder
     </button>
-    <button id="btn-bell" class="btn-bell" onclick="toggleNotificaciones()" title="Activar notificaciones" style="display:none;">🔔</button>
+    <a href="https://t.me/+6d1mQnI_ElplNmNk" target="_blank" id="btn-telegram" class="btn-telegram" style="display:none;">✈️ Notificaciones</a>
     <button id="btn-new-idea" class="btn-new" onclick="openForm()" style="display:none;">+ Nueva idea</button>
   </div>
 </header>
@@ -532,65 +527,13 @@
   const supabase = createClient(supabaseUrl, supabaseAnonKey);
   const SUPABASE_BUCKET = 'archivos';
   const ADMIN_EMAIL = 'nilelpeque@gmail.com';
-  const VAPID_KEY = 'BFcNMT2s4quHl7FcOIZ5drfhMmNh2RsL5kab59m9ONV8mVxKOcQmYkqDhBnyWgr6J1RHYbp9x-CM6fjCl3otijk';
+  
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
   const auth = getAuth(app);
   const provider = new GoogleAuthProvider();
 
-  // ——— MESSAGING — carga lazy, no rompe en móvil ———
-  let messaging = null;
-  try {
-    const msgModule = await import("https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging.js");
-    if ('serviceWorker' in navigator) {
-      messaging = msgModule.getMessaging(app);
-    }
-  } catch (e) {
-    console.log('Messaging no disponible:', e.message);
-  }
-
-  async function getNotifToken() {
-    if (!messaging) return null;
-    try {
-      const { getToken } = await import("https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging.js");
-      await navigator.serviceWorker.ready;
-      return await getToken(messaging, { vapidKey: VAPID_KEY });
-    } catch { return null; }
-  }
-
-  async function updateBellUI() {
-    const btn = document.getElementById('btn-bell');
-    if (!btn || !currentUser) return;
-    btn.style.display = 'flex'; // siempre visible cuando hay sesión
-    if (!messaging) { btn.title = 'Notificaciones no disponibles en este navegador'; return; }
-    try {
-      const token = await getNotifToken();
-      if (!token) { btn.classList.remove('subscribed'); return; }
-      const snap = await getDocs(collection(db, 'notif_tokens'));
-      const sub = snap.docs.find(d => d.data().token === token);
-      btn.classList.toggle('subscribed', !!sub);
-      btn.title = sub ? 'Notificaciones activadas — clic para desactivar' : 'Activar notificaciones de nuevas ideas';
-    } catch { btn.classList.remove('subscribed'); }
-  }
-
-  window.toggleNotificaciones = async function() {
-    if (!currentUser) return;
-    if (!messaging) { alert('Las notificaciones push no están disponibles en este navegador. Prueba con Chrome en Android o en escritorio.'); return; }
-    const btn = document.getElementById('btn-bell');
-    btn.disabled = true;
-    try {
-      const permission = await Notification.requestPermission();
-      if (permission !== 'granted') { alert('Debes permitir las notificaciones en el navegador.'); return; }
-      const token = await getNotifToken();
-      if (!token) { alert('No se pudo obtener el token. Inténtalo de nuevo.'); return; }
-      const snap = await getDocs(collection(db, 'notif_tokens'));
-      const sub = snap.docs.find(d => d.data().token === token);
-      if (sub) { await deleteDoc(doc(db, 'notif_tokens', sub.id)); }
-      else { await addDoc(collection(db, 'notif_tokens'), { token, uid: currentUser.uid, email: currentUser.email, createdAt: Timestamp.now() }); }
-      await updateBellUI();
-    } finally { btn.disabled = false; }
-  };
 
   // ——— STATE ———
   let posts = [], currentUser = null, isAdmin = false, canWrite = false, canComment = false;
@@ -667,11 +610,11 @@
       if (isAdmin) { badge.textContent = 'Admin'; badge.className = 'user-role-badge admin'; }
       else if (canWrite) { badge.textContent = 'Colaborador'; badge.className = 'user-role-badge colaborador'; }
       else { badge.className = 'user-role-badge'; }
-      updateBellUI();
+      document.getElementById('btn-telegram').style.display = 'flex';
     } else {
       btnLogin.style.display = 'inline-block';
       userDisplay.style.display = 'none';
-      document.getElementById('btn-bell').style.display = 'none';
+      document.getElementById('btn-telegram').style.display = 'none';
     }
 
     if (canWrite) { document.getElementById('btn-new-idea').style.display = 'inline-block'; addBtns.forEach(b => b.classList.add('show')); }
