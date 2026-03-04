@@ -808,10 +808,26 @@
   window.publish = async function() {
     if (!canWrite) { alert('🔐 Sin permisos.'); return; }
     const idea = document.getElementById('f-idea').value.trim();
-    const bodyHTML = document.getElementById('f-body').innerHTML.trim();
+    const rawHTML = document.getElementById('f-body').innerHTML.trim();
     const section = document.getElementById('f-sec').value;
     const tagsRaw = document.getElementById('f-tags').value.trim();
-    if (!idea || !bodyHTML || bodyHTML === '<br>') { alert('Rellena idea y desarrollo.'); return; }
+    if (!idea || !rawHTML || rawHTML === '<br>') { alert('Rellena idea y desarrollo.'); return; }
+
+    // Limpiar HTML: eliminar data: y blob: URLs que disparan el límite de Firestore
+    const tmp = document.createElement('div');
+    tmp.innerHTML = rawHTML;
+    tmp.querySelectorAll('img').forEach(img => {
+      if (img.src.startsWith('data:') || img.src.startsWith('blob:')) img.remove();
+    });
+    tmp.querySelectorAll('video').forEach(v => {
+      if (v.src.startsWith('data:') || v.src.startsWith('blob:')) v.remove();
+      // Asegurar que solo guardamos el src como atributo, sin datos extra
+      const cleanSrc = v.getAttribute('src') || v.src;
+      if (cleanSrc && cleanSrc.startsWith('http')) {
+        v.removeAttribute('id'); v.removeAttribute('data-src');
+      }
+    });
+    const bodyHTML = tmp.innerHTML.trim();
     const tags = tagsRaw ? tagsRaw.split(',').map(t=>t.trim()).filter(Boolean) : [];
     try {
       const btn = document.getElementById('btn-publish');
