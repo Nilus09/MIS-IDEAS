@@ -279,6 +279,9 @@
     .editor-content img { max-width: 45%; height: auto; margin: 6px 14px 6px 0; float: left; border-radius: 3px; cursor: pointer; }
     .editor-content img.float-right { float: right; margin: 6px 0 6px 14px; }
     .editor-content img.full-width { max-width: 100%; float: none; display: block; margin: 12px auto; }
+    .editor-content video { max-width:100%; display:block; margin:16px auto; border-radius:4px; background:#000; }
+    .editor-content .yt-embed { position:relative; padding-bottom:56.25%; height:0; margin:20px 0; clear:both; }
+    .editor-content .yt-embed iframe { position:absolute; top:0; left:0; width:100%; height:100%; border:none; border-radius:4px; }
     .file-list-preview { margin-top: 10px; }
     .file-preview-item {
       display: flex; align-items: center; gap: 8px; padding: 6px 10px;
@@ -470,8 +473,11 @@
           <button type="button" class="toolbar-btn" onclick="fmt('insertUnorderedList')">• Lista</button>
           <div class="toolbar-sep"></div>
           <button type="button" class="toolbar-btn" onclick="insertImagen()" title="Insertar imagen">🖼️ Foto</button>
+          <button type="button" class="toolbar-btn" onclick="insertVideo()" title="Subir video">🎬 Video</button>
+          <button type="button" class="toolbar-btn" onclick="insertYoutube()" title="Incrustar YouTube">▶️ YouTube</button>
         </div>
         <input type="file" id="f-img-input" accept="image/*" style="display:none" onchange="handleImageInsert(event)">
+        <input type="file" id="f-vid-input" accept="video/*" style="display:none" onchange="handleVideoInsert(event)">
         <div id="f-body" class="editor-content" contenteditable="true" placeholder="Escribe tu argumento completo..."></div>
       </div>
       <div class="form-group">
@@ -948,6 +954,86 @@
       img.title = 'Clic: alineación izquierda → derecha';
     }
   }
+
+  window.insertVideo = function() {
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0) savedRange = sel.getRangeAt(0).cloneRange();
+    document.getElementById('f-vid-input').click();
+  };
+
+  window.handleVideoInsert = async function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    if (file.size > 52428800) { alert('El video es demasiado grande (máx 50MB).'); return; }
+    const editor = document.getElementById('f-body');
+    const btn = document.getElementById('btn-publish');
+    btn.disabled = true; btn.textContent = 'Subiendo video...';
+    try {
+      const ext = file.name.split('.').pop();
+      const path = `${currentUser.uid}/vid_${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from(SUPABASE_BUCKET).upload(path, file, { cacheControl: '3600', upsert: false });
+      if (error) throw error;
+      const { data: { publicUrl } } = supabase.storage.from(SUPABASE_BUCKET).getPublicUrl(path);
+
+      const video = document.createElement('video');
+      video.src = publicUrl;
+      video.controls = true;
+      video.style.maxWidth = '100%';
+      video.style.display = 'block';
+      video.style.margin = '16px auto';
+      video.style.borderRadius = '4px';
+      video.style.background = '#000';
+
+      editor.focus();
+      if (savedRange) {
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(savedRange);
+        savedRange.deleteContents();
+        savedRange.insertNode(video);
+        savedRange.setStartAfter(video);
+        savedRange.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(savedRange);
+      } else {
+        editor.appendChild(video);
+      }
+    } catch (err) { alert('Error subiendo video: ' + err.message); }
+    btn.disabled = false; btn.textContent = editingId ? 'Actualizar' : 'Publicar';
+    event.target.value = '';
+  };
+
+  window.insertYoutube = function() {
+    const url = prompt('Pega el enlace de YouTube:');
+    if (!url) return;
+    let videoId = null;
+    const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([^&?/\s]+)/);
+    if (match) videoId = match[1];
+    if (!videoId) { alert('Enlace de YouTube no válido.'); return; }
+
+    const editor = document.getElementById('f-body');
+    editor.focus();
+
+    const wrap = document.createElement('div');
+    wrap.className = 'yt-embed';
+    wrap.style.cssText = 'position:relative;padding-bottom:56.25%;height:0;margin:20px 0;clear:both;';
+    const iframe = document.createElement('iframe');
+    iframe.src = `https://www.youtube.com/embed/${videoId}`;
+    iframe.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;border:none;border-radius:4px;';
+    iframe.allowFullscreen = true;
+    iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
+    wrap.appendChild(iframe);
+
+    const sel = window.getSelection();
+    if (savedRange) {
+      sel.removeAllRanges();
+      sel.addRange(savedRange);
+      savedRange.deleteContents();
+      savedRange.insertNode(wrap);
+    } else {
+      editor.appendChild(wrap);
+    }
+  };
 
   window.fmt = function(cmd) { document.getElementById('f-body').focus(); document.execCommand(cmd, false, null); };
   window.fmtBlock = function(tag) { document.getElementById('f-body').focus(); document.execCommand('formatBlock', false, tag); };
