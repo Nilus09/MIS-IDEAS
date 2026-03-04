@@ -82,6 +82,13 @@
     .article-body strong { font-weight:700; }
     .article-body em { font-style:italic; }
     .article-body u { text-decoration:underline; }
+    .article-body img { max-width:45%; height:auto; float:left; margin:6px 14px 6px 0; border-radius:3px; }
+    .article-body img[style*="float: right"], .article-body img[style*="float:right"] { float:right; margin:6px 0 6px 14px; }
+    .article-body img[style*="float: none"], .article-body img[style*="float:none"] { float:none; display:block; max-width:100%; margin:12px auto; }
+    .article-body::after { content:''; display:table; clear:both; }
+    .article-body video { max-width:100%; display:block; margin:16px auto; border-radius:4px; background:#000; }
+    .article-body .yt-embed { position:relative; padding-bottom:56.25%; height:0; margin:20px 0; clear:both; }
+    .article-body .yt-embed iframe { position:absolute; top:0; left:0; width:100%; height:100%; border:none; border-radius:4px; }
     
     /* ---- AUTOR BOTTOM ---- */
     .author-box-bottom {
