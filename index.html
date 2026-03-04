@@ -276,6 +276,9 @@
     .editor-content p  { margin-bottom: 0.8em; }
     .editor-content ul { padding-left: 1.4em; margin-bottom: 0.8em; }
     .editor-content li { margin-bottom: 0.3em; }
+    .editor-content img { max-width: 45%; height: auto; margin: 6px 14px 6px 0; float: left; border-radius: 3px; cursor: pointer; }
+    .editor-content img.float-right { float: right; margin: 6px 0 6px 14px; }
+    .editor-content img.full-width { max-width: 100%; float: none; display: block; margin: 12px auto; }
     .file-list-preview { margin-top: 10px; }
     .file-preview-item {
       display: flex; align-items: center; gap: 8px; padding: 6px 10px;
@@ -392,7 +395,7 @@
       <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G">
       Acceder
     </button>
-    <a href="https://t.me/+6d1mQnI_ElplNmNk" target="_blank" id="btn-telegram" class="btn-telegram" style="display:none;">Notificaciones</a>
+    <a href="https://t.me/+6d1mQnI_ElplNmNk" target="_blank" id="btn-telegram" class="btn-telegram" style="display:none;">✈️ Notificaciones</a>
     <button id="btn-new-idea" class="btn-new" onclick="openForm()" style="display:none;">+ Nueva idea</button>
   </div>
 </header>
@@ -465,7 +468,10 @@
           <button type="button" class="toolbar-btn" onclick="fmtBlock('p')">¶</button>
           <div class="toolbar-sep"></div>
           <button type="button" class="toolbar-btn" onclick="fmt('insertUnorderedList')">• Lista</button>
+          <div class="toolbar-sep"></div>
+          <button type="button" class="toolbar-btn" onclick="insertImagen()" title="Insertar imagen">🖼️ Foto</button>
         </div>
+        <input type="file" id="f-img-input" accept="image/*" style="display:none" onchange="handleImageInsert(event)">
         <div id="f-body" class="editor-content" contenteditable="true" placeholder="Escribe tu argumento completo..."></div>
       </div>
       <div class="form-group">
@@ -863,6 +869,85 @@
     else usersPanel.classList.remove('visible');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  // ——— IMÁGENES EN EDITOR ———
+  let savedRange = null;
+
+  window.insertImagen = function() {
+    // Guardar posición del cursor antes de abrir el file picker
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0) savedRange = sel.getRangeAt(0).cloneRange();
+    document.getElementById('f-img-input').click();
+  };
+
+  window.handleImageInsert = async function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const editor = document.getElementById('f-body');
+    editor.focus();
+
+    // Mostrar preview temporal mientras sube
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        // Subir a Supabase
+        const ext = file.name.split('.').pop();
+        const path = `${currentUser.uid}/img_${Date.now()}.${ext}`;
+        const { error } = await supabase.storage.from(SUPABASE_BUCKET).upload(path, file, { cacheControl: '3600', upsert: false });
+        if (error) throw error;
+        const { data: { publicUrl } } = supabase.storage.from(SUPABASE_BUCKET).getPublicUrl(path);
+
+        // Insertar imagen en la posición guardada del cursor
+        const img = document.createElement('img');
+        img.src = publicUrl;
+        img.style.maxWidth = '45%';
+        img.style.float = 'left';
+        img.style.margin = '6px 14px 6px 0';
+        img.style.borderRadius = '3px';
+        img.onclick = () => cycleImageAlign(img);
+        img.title = 'Clic para cambiar alineación';
+
+        if (savedRange) {
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(savedRange);
+          savedRange.deleteContents();
+          savedRange.insertNode(img);
+          // Mover cursor después de la imagen
+          savedRange.setStartAfter(img);
+          savedRange.collapse(true);
+          sel.removeAllRanges();
+          sel.addRange(savedRange);
+        } else {
+          editor.appendChild(img);
+        }
+      } catch (err) {
+        alert('Error subiendo imagen: ' + err.message);
+      }
+    };
+    reader.readAsDataURL(file);
+    event.target.value = '';
+  };
+
+  function cycleImageAlign(img) {
+    if (img.style.float === 'left') {
+      img.style.float = 'right';
+      img.style.margin = '6px 0 6px 14px';
+      img.title = 'Clic: alineación derecha → centro';
+    } else if (img.style.float === 'right') {
+      img.style.float = 'none';
+      img.style.maxWidth = '100%';
+      img.style.display = 'block';
+      img.style.margin = '12px auto';
+      img.title = 'Clic: imagen completa → izquierda';
+    } else {
+      img.style.float = 'left';
+      img.style.maxWidth = '45%';
+      img.style.display = '';
+      img.style.margin = '6px 14px 6px 0';
+      img.title = 'Clic: alineación izquierda → derecha';
+    }
+  }
 
   window.fmt = function(cmd) { document.getElementById('f-body').focus(); document.execCommand(cmd, false, null); };
   window.fmtBlock = function(tag) { document.getElementById('f-body').focus(); document.execCommand('formatBlock', false, tag); };
