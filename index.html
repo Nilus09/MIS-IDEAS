@@ -1,14 +1,172 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" prefix="og: https://ogp.me/ns#">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+    <!-- ═══════════════════════════════════════════
+         SEO PRIMARIO
+    ═══════════════════════════════════════════ -->
+    <title>Planificador Interrail 2026 — Rutas en Tren por Europa | Netnull</title>
+    <meta name="description" content="Planificador Interrail gratuito para 2026. Traza tu ruta en tren por Europa, calcula el pase Interrail más barato, cruza el Canal de la Mancha por el Eurotúnel y estima el presupuesto total con reservas incluidas.">
+    <meta name="keywords" content="planificador interrail, planificador interrail 2026, interrail planner, planificar ruta interrail, ruta interrail europa, pase interrail 2026, interrail flexi, interrail continuous, eurotúnel interrail, eurostar interrail, precio interrail 2026, viaje tren europa, interrail españa, mapa interrail">
+    <meta name="author" content="Planificador Interrail">
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+    <meta name="theme-color" content="#070d1a" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#070d1a">
+    <link rel="canonical" href="https://netnull.org/">
+
+    <!-- Idioma y región -->
+    <meta name="language" content="es">
+    <meta name="geo.region" content="ES">
+    <link rel="alternate" hreflang="es" href="https://netnull.org/">
+    <link rel="alternate" hreflang="x-default" href="https://netnull.org/">
+
+    <!-- ═══════════════════════════════════════════
+         OPEN GRAPH (Facebook, WhatsApp, LinkedIn…)
+    ═══════════════════════════════════════════ -->
+    <meta property="og:type"        content="website">
+    <meta property="og:site_name"   content="Planificador Interrail 2026">
+    <meta property="og:url"         content="https://netnull.org/">
+    <meta property="og:locale"      content="es_ES">
+    <meta property="og:title"       content="Planificador Interrail 2026 — Planifica tu ruta en tren por Europa">
+    <meta property="og:description" content="El mejor planificador Interrail gratuito para 2026. Calcula tu ruta en tren, el pase más barato y el presupuesto total incluyendo Eurotúnel y reservas.">
+    <meta property="og:image"       content="https://netnull.org/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt"   content="Mapa de Europa con rutas ferroviarias trazadas en el Planificador Interrail 2026">
+
+    <!-- ═══════════════════════════════════════════
+         TWITTER / X CARDS
+    ═══════════════════════════════════════════ -->
+    <meta name="twitter:card"        content="summary_large_image">
+    <meta name="twitter:site"        content="@interrailplanner">
+    <meta name="twitter:title"       content="Planificador Interrail 2026 — Rutas ferroviarias por Europa">
+    <meta name="twitter:description" content="Planificador Interrail 2026 gratuito. Rutas en tren por Europa, pase óptimo, Eurotúnel y presupuesto en un clic.">
+    <meta name="twitter:image"       content="https://netnull.org/og-image.png">
+    <meta name="twitter:image:alt"   content="Planificador Interrail 2026 — Mapa de rutas por Europa">
+
+    <!-- ═══════════════════════════════════════════
+         PWA / APP META
+    ═══════════════════════════════════════════ -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Interrail Planner 2026</title>
-    
+    <meta name="apple-mobile-web-app-title" content="Planificador Interrail">
+    <meta name="application-name" content="Planificador Interrail 2026">
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
+    <link rel="manifest" href="/manifest.json">
+
+    <!-- ═══════════════════════════════════════════
+         DATOS ESTRUCTURADOS — JSON-LD
+    ═══════════════════════════════════════════ -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebApplication",
+          "@id": "https://netnull.org/#webapp",
+          "name": "Planificador Interrail 2026",
+          "url": "https://netnull.org/",
+          "description": "Planificador Interrail gratuito para 2026. Traza rutas en tren por Europa, calcula el pase óptimo, cruza el Eurotúnel y estima el presupuesto total con reservas.",
+          "applicationCategory": "TravelApplication",
+          "operatingSystem": "Web, iOS, Android",
+          "inLanguage": "es",
+          "isAccessibleForFree": true,
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "EUR"
+          },
+          "featureList": [
+            "Cálculo de pase Interrail Flexi y Continuous",
+            "Enrutamiento vía Eurotúnel / Canal de la Mancha",
+            "Estimación de reservas de asiento obligatorias",
+            "Validación de trayectos nacionales en país de residencia",
+            "Mapa interactivo de ruta ferroviaria"
+          ],
+          "screenshot": "https://netnull.org/og-image.png",
+          "publisher": {
+            "@type": "Organization",
+            "name": "Planificador Interrail",
+            "url": "https://netnull.org/"
+          }
+        },
+        {
+          "@type": "WebPage",
+          "@id": "https://netnull.org/#webpage",
+          "url": "https://netnull.org/",
+          "name": "Planificador Interrail 2026 — Rutas en Tren por Europa",
+          "description": "Planificador Interrail 2026. Calcula el pase óptimo, traza tu ruta en tren por Europa, cruza el Canal de la Mancha por el Eurotúnel y estima el presupuesto total.",
+          "inLanguage": "es",
+          "isPartOf": { "@id": "https://netnull.org/#webapp" },
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": {
+              "@type": "EntryPoint",
+              "urlTemplate": "https://netnull.org/?q={search_term_string}"
+            },
+            "query-input": "required name=search_term_string"
+          },
+          "breadcrumb": {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Inicio",
+                "item": "https://netnull.org/"
+              }
+            ]
+          }
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "¿Cómo funciona el Planificador Interrail 2026?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Introduce tu ciudad de origen, añade los destinos europeos que quieres visitar y la herramienta calcula automáticamente el pase Interrail más económico, traza la ruta en el mapa y estima el presupuesto total incluyendo reservas de asiento."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "¿El Eurostar por el Eurotúnel está incluido en el pase Interrail?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Sí, el Eurostar está cubierto por el pase Interrail, pero requiere una reserva de asiento obligatoria de aproximadamente 35€ por trayecto. El planificador calcula este suplemento automáticamente."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "¿Cuánto cuesta el pase Interrail en 2026?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Los precios del Interrail Global 2026 van desde 212€ (joven, Flexi 4 días) hasta 584€ (adulto, Continuous 22 días). El planificador selecciona el pase óptimo según los días de tránsito de tu ruta."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
+
+    <!-- ═══════════════════════════════════════════
+         RENDIMIENTO — DNS / PRECONNECT / PRELOAD
+    ═══════════════════════════════════════════ -->
+    <link rel="dns-prefetch" href="//fonts.googleapis.com">
+    <link rel="dns-prefetch" href="//fonts.gstatic.com">
+    <link rel="dns-prefetch" href="//unpkg.com">
+    <link rel="dns-prefetch" href="//nominatim.openstreetmap.org">
+    <link rel="dns-prefetch" href="//router.project-osrm.org">
+    <link rel="dns-prefetch" href="//basemaps.cartocdn.com">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" as="style">
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
@@ -47,13 +205,13 @@
         }
 
         /* ── LAYOUT DESKTOP ──────────────────────────────────── */
-        .app-shell {
+        .app-shell, main.app-shell {
             display: flex;
             height: 100%;
             height: 100dvh;
         }
 
-        #sidebar {
+        #sidebar, aside#sidebar {
             width: 440px;
             min-width: 440px;
             display: flex;
@@ -73,13 +231,13 @@
         }
 
         /* ── HEADER ──────────────────────────────────────────── */
-        .header {
+        .header, header.header {
             padding: 20px 20px 16px;
             background: var(--bg-deep);
             border-bottom: 1px solid var(--border);
             flex-shrink: 0;
         }
-        .header h1 {
+        header.header h1, .header h1 {
             font-family: 'Syne', sans-serif;
             font-size: 18px;
             font-weight: 800;
@@ -182,15 +340,16 @@
         }
         .info-card.pass-card { border-color: #3b1a6e; background: linear-gradient(135deg,#1a0b3d,#0f172a); }
         .info-card.budget-card { border-color: #1a3a8a; background: linear-gradient(135deg,#0a1f4e,#0f172a); }
-        .info-card h3 {
+        .info-card-heading {
             font-size: 9px;
             text-transform: uppercase;
             letter-spacing: 1.2px;
             font-weight: 700;
             margin-bottom: 5px;
+            font-family: 'DM Sans', sans-serif;
         }
-        .pass-card h3 { color: var(--purple); }
-        .budget-card h3 { color: var(--accent); }
+        .pass-card .info-card-heading   { color: var(--purple); }
+        .budget-card .info-card-heading { color: var(--accent); }
         .info-card .val {
             font-family: 'Syne', sans-serif;
             font-size: 13px;
@@ -320,7 +479,7 @@
         .leg-info b { color: var(--text-hi); }
 
         /* ── BOTTOM ACTIONS ──────────────────────────────────── */
-        .action-bar {
+        .action-bar, footer.action-bar {
             padding: 12px 16px;
             padding-bottom: calc(12px + var(--safe-bottom));
             background: var(--bg-deep);
@@ -629,70 +788,123 @@
 </head>
 <body>
 
-<div class="app-shell">
-    <div id="map"></div>
+<!-- CONTENIDO PRINCIPAL — semántico para SEO/accesibilidad -->
+<main class="app-shell" role="main" aria-label="Planificador de rutas Interrail">
 
-    <div id="sidebar" id="sidebar">
+    <!-- Mapa interactivo de rutas ferroviarias europeas -->
+    <div id="map"
+         role="img"
+         aria-label="Mapa interactivo de Europa con rutas ferroviarias Interrail trazadas"
+         title="Mapa de rutas ferroviarias por Europa"></div>
+
+    <!-- Panel lateral / Bottom sheet móvil -->
+    <aside id="sidebar" aria-label="Panel de planificación de ruta Interrail">
+
         <!-- Mobile drag handle + peek -->
-        <div class="sheet-drag-handle" id="sheet-handle"></div>
-        <div class="sheet-peek">
-            <span class="sheet-peek-title">🇪🇺 Interrail Planner</span>
-            <span class="sheet-peek-badge" id="peek-count">Sin destinos</span>
+        <div class="sheet-drag-handle" id="sheet-handle" role="button" aria-label="Expandir panel de planificación" tabindex="0"></div>
+        <div class="sheet-peek" role="button" aria-expanded="false" aria-controls="sidebar" tabindex="0">
+            <span class="sheet-peek-title">🇪🇺 Planificador Interrail</span>
+            <span class="sheet-peek-badge" id="peek-count" aria-live="polite">Sin destinos</span>
         </div>
 
         <!-- Desktop header -->
-        <div class="header">
-            <h1>🇪🇺 Interrail Planner 2026</h1>
+        <header class="header">
+            <h1>🇪🇺 Planificador Interrail 2026</h1>
             <p>Planificador ferroviario europeo · Eurotúnel · Validación Interrail</p>
-        </div>
+        </header>
 
-        <div class="search-wrap">
-            <div class="search-inner">
-                <span class="search-icon">🔍</span>
-                <input type="text" id="city-input" placeholder="Añade ciudad de origen o destino..." autocomplete="off">
+        <!-- Búsqueda de ciudades -->
+        <section class="search-wrap" aria-label="Buscar ciudades europeas para añadir a la ruta">
+            <div class="search-inner" role="search">
+                <span class="search-icon" aria-hidden="true">🔍</span>
+                <input
+                    type="search"
+                    id="city-input"
+                    name="ciudad"
+                    placeholder="Añade ciudad de origen o destino..."
+                    autocomplete="off"
+                    aria-label="Buscar ciudad europea"
+                    aria-autocomplete="list"
+                    aria-controls="suggestions"
+                    aria-haspopup="listbox"
+                    spellcheck="false">
             </div>
-            <ul id="suggestions" class="suggestions-list"></ul>
-        </div>
+            <ul id="suggestions"
+                class="suggestions-list"
+                role="listbox"
+                aria-label="Sugerencias de ciudades"
+                aria-live="polite"></ul>
+        </section>
 
-        <div class="cards-row">
-            <div class="info-card pass-card">
-                <h3>Pase Óptimo</h3>
-                <div class="val" id="recommended-pass">—</div>
+        <!-- Tarjetas de resumen -->
+        <section class="cards-row" aria-label="Resumen del pase y presupuesto estimado">
+            <article class="info-card pass-card" aria-label="Pase Interrail recomendado">
+                <h2 class="info-card-heading">Pase Óptimo</h2>
+                <div class="val" id="recommended-pass" aria-live="polite">—</div>
                 <div class="sub" id="pass-subtext">Días de tránsito calculados</div>
-            </div>
-            <div class="info-card budget-card">
-                <h3>Coste Estimado</h3>
-                <div class="val" id="total-price">0 €</div>
+            </article>
+            <article class="info-card budget-card" aria-label="Coste estimado del viaje">
+                <h2 class="info-card-heading">Coste Estimado</h2>
+                <div class="val" id="total-price" aria-live="polite">0 €</div>
                 <div class="sub" id="budget-subtext">Con reservas incluidas</div>
-            </div>
-        </div>
+            </article>
+        </section>
 
-        <div class="destinations-wrap">
-            <button class="btn-return" id="btn-trigger-return" onclick="addFinalReturnStop()">🔄 Cerrar ruta (Volver al Origen)</button>
-            <ul class="route-list" id="route-list"></ul>
-        </div>
+        <!-- Lista de destinos -->
+        <section class="destinations-wrap" aria-label="Itinerario de destinos">
+            <button class="btn-return" id="btn-trigger-return" onclick="addFinalReturnStop()" aria-label="Cerrar ruta añadiendo parada de regreso al origen">
+                🔄 Cerrar ruta (Volver al Origen)
+            </button>
+            <ul class="route-list" id="route-list" aria-label="Lista de ciudades en la ruta" aria-live="polite"></ul>
+        </section>
 
-        <div class="action-bar">
-            <button class="btn-primary" onclick="openSummaryModal()">💾 Ver Resumen del Viaje</button>
-        </div>
-    </div>
-</div>
+        <!-- Acción principal -->
+        <footer class="action-bar">
+            <button class="btn-primary" onclick="openSummaryModal()" aria-label="Ver resumen completo del viaje y presupuesto">
+                💾 Ver Resumen del Viaje
+            </button>
+        </footer>
 
-<!-- FABs for mobile -->
-<div class="map-fab">
-    <button class="fab-btn fab-locate" onclick="fitMapBounds()" title="Centrar mapa">🎯</button>
-    <button class="fab-btn fab-add" onclick="focusSearch()" title="Añadir ciudad">＋</button>
-</div>
+    </aside>
+</main>
 
-<!-- Summary modal -->
-<div id="summary-modal" class="modal-overlay">
+<!-- FABs móvil -->
+<nav class="map-fab" aria-label="Acciones rápidas del mapa">
+    <button class="fab-btn fab-locate" onclick="fitMapBounds()" title="Centrar mapa en la ruta" aria-label="Centrar mapa en la ruta">🎯</button>
+    <button class="fab-btn fab-add" onclick="focusSearch()" title="Añadir ciudad a la ruta" aria-label="Añadir ciudad a la ruta">＋</button>
+</nav>
+
+<!-- Modal resumen -->
+<div id="summary-modal"
+     class="modal-overlay"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="modal-title"
+     aria-describedby="modal-content-body">
     <div class="modal-box">
-        <div class="modal-handle"></div>
-        <h2>🗺️ Resumen del Viaje</h2>
-        <div class="modal-body" id="modal-content-body"></div>
-        <button class="btn-close" onclick="closeSummaryModal()">← Volver al Editor</button>
+        <div class="modal-handle" aria-hidden="true"></div>
+        <h2 id="modal-title">🗺️ Resumen del Viaje</h2>
+        <div class="modal-body" id="modal-content-body" aria-live="polite"></div>
+        <button class="btn-close" onclick="closeSummaryModal()" aria-label="Cerrar resumen y volver al editor">← Volver al Editor</button>
     </div>
 </div>
+
+<!-- Contenido textual para indexación SEO (oculto visualmente, visible para crawlers) -->
+<section aria-hidden="false" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;" itemscope itemtype="https://schema.org/WebApplication">
+    <h2 itemprop="name">Planificador Interrail 2026 — Rutas en Tren por Europa</h2>
+    <p itemprop="description">
+        El Planificador Interrail más completo de 2026, completamente gratuito. 
+        Añade ciudades europeas, traza tu ruta ferroviaria en el mapa, cruza el Canal de la Mancha 
+        vía Eurotúnel con el Eurostar, calcula el pase Interrail Flexi o Continuous más económico 
+        y estima el presupuesto total incluyendo reservas de asiento obligatorias. 
+        Planificador interrail compatible con rutas desde España, Francia, Alemania, Italia, 
+        Reino Unido y toda Europa. Planifica tu viaje interrail en minutos.
+    </p>
+    <p>Características: <span itemprop="featureList">rutas interrail, eurotúnel, pase flexi, pase continuous, presupuesto viaje tren, mapa ferroviario europa</span></p>
+    <meta itemprop="applicationCategory" content="TravelApplication">
+    <meta itemprop="operatingSystem" content="Web Browser">
+    <link itemprop="url" href="https://netnull.org/">
+</section>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
