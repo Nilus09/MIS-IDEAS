@@ -2,458 +2,1082 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interrail Planner 2026 - Conexión Canal de la Mancha</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Interrail Planner 2026</title>
     
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
     <style>
-        /* Estilos Globales Premium */
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
-        body { display: flex; height: 100vh; background-color: #0f172a; color: #f8fafc; overflow: hidden; position: relative; }
+        :root {
+            --bg-deep:    #070d1a;
+            --bg-card:    #0f172a;
+            --bg-panel:   #111827;
+            --bg-surface: #1e293b;
+            --border:     #1e2d45;
+            --border-mid: #334155;
+            --text-hi:    #f0f6ff;
+            --text-mid:   #94a3b8;
+            --text-lo:    #64748b;
+            --accent:     #3b82f6;
+            --accent-glow:rgba(59,130,246,0.18);
+            --green:      #10b981;
+            --orange:     #f97316;
+            --purple:     #a855f7;
+            --red:        #ef4444;
+            --yellow:     #eab308;
+            --sheet-radius: 22px;
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+            --safe-top:    env(safe-area-inset-top, 0px);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            background: var(--bg-deep);
+            color: var(--text-hi);
+            font-family: 'DM Sans', -apple-system, sans-serif;
+        }
+
+        /* ── LAYOUT DESKTOP ──────────────────────────────────── */
+        .app-shell {
+            display: flex;
+            height: 100%;
+            height: 100dvh;
+        }
 
         #sidebar {
-            width: 450px; background: #1e293b; border-right: 1px solid #334155; display: flex; flex-direction: column; z-index: 1000; box-shadow: 8px 0 24px rgba(0, 0, 0, 0.35);
+            width: 440px;
+            min-width: 440px;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-panel);
+            border-right: 1px solid var(--border);
+            z-index: 100;
+            box-shadow: 4px 0 32px rgba(0,0,0,0.5);
+            overflow: hidden;
         }
 
-        .header { padding: 24px; background: #111827; border-bottom: 1px solid #334155; }
-        .header h1 { font-size: 22px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px; display: flex; align-items: center; gap: 8px; }
-        .header p { font-size: 13px; color: #94a3b8; margin-top: 6px; line-height: 1.4; }
-
-        .search-container { position: relative; padding: 20px; background: #1e293b; border-bottom: 1px solid #334155; }
-        .search-box { position: relative; display: flex; align-items: center; }
-        .search-box input {
-            width: 100%; padding: 14px 16px 14px 42px; background: #0f172a; border: 1px solid #475569; border-radius: 10px; color: #ffffff; font-size: 15px; outline: none; transition: all 0.25s ease;
+        #map {
+            flex: 1;
+            min-width: 0;
+            height: 100%;
+            background: var(--bg-deep);
         }
-        .search-box input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25); background: #111827; }
-        .search-box::before { content: '🔍'; position: absolute; left: 14px; color: #94a3b8; font-size: 16px; pointer-events: none; }
-        
+
+        /* ── HEADER ──────────────────────────────────────────── */
+        .header {
+            padding: 20px 20px 16px;
+            background: var(--bg-deep);
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .header h1 {
+            font-family: 'Syne', sans-serif;
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--text-hi);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: -0.3px;
+        }
+        .header p {
+            font-size: 12px;
+            color: var(--text-lo);
+            margin-top: 5px;
+            line-height: 1.4;
+        }
+
+        /* ── SEARCH ──────────────────────────────────────────── */
+        .search-wrap {
+            padding: 14px 16px;
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+            position: relative;
+        }
+        .search-inner {
+            display: flex;
+            align-items: center;
+            background: var(--bg-deep);
+            border: 1.5px solid var(--border-mid);
+            border-radius: 12px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .search-inner:focus-within {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        .search-icon {
+            padding: 0 12px;
+            font-size: 15px;
+            color: var(--text-lo);
+            flex-shrink: 0;
+        }
+        .search-inner input {
+            flex: 1;
+            padding: 13px 14px 13px 0;
+            background: transparent;
+            border: none;
+            color: var(--text-hi);
+            font-size: 14px;
+            font-family: 'DM Sans', sans-serif;
+            outline: none;
+            min-width: 0;
+        }
+        .search-inner input::placeholder { color: var(--text-lo); }
+
         .suggestions-list {
-            position: absolute; top: 74px; left: 20px; right: 20px; background: #1e293b; border: 1px solid #475569; border-radius: 10px; max-height: 260px; overflow-y: auto; z-index: 2000; list-style: none; display: none; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5); padding: 6px 0;
+            position: absolute;
+            top: calc(100% - 2px);
+            left: 16px; right: 16px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-mid);
+            border-top: none;
+            border-radius: 0 0 12px 12px;
+            max-height: 240px;
+            overflow-y: auto;
+            z-index: 500;
+            list-style: none;
+            display: none;
+            box-shadow: 0 16px 32px rgba(0,0,0,0.6);
         }
-        .suggestions-list li { padding: 12px 18px; font-size: 14px; color: #e2e8f0; cursor: pointer; transition: all 0.15s ease; display: flex; justify-content: space-between; align-items: center; }
-        .suggestions-list li:hover { background: #3b82f6; color: #ffffff; padding-left: 22px; }
+        .suggestions-list li {
+            padding: 13px 16px;
+            font-size: 13.5px;
+            color: var(--text-mid);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.12s;
+        }
+        .suggestions-list li:last-child { border-bottom: none; }
+        .suggestions-list li::before { content: '📍'; font-size: 12px; }
+        .suggestions-list li:hover,
+        .suggestions-list li:active { background: var(--accent); color: #fff; }
 
-        /* Tarjetas de Información */
-        .cards-container { padding: 20px 20px 5px 20px; display: flex; flex-direction: column; gap: 12px; }
-        .premium-card { padding: 16px; border-radius: 14px; background: linear-gradient(135deg, #311042 0%, #1e1b4b 100%); border: 1px solid #581c87; }
-        .premium-card.budget { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); border-color: #1d4ed8; }
-        .premium-card h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px; color: #c084fc; margin-bottom: 4px; font-weight: 700; }
-        .premium-card.budget h3 { color: #60a5fa; }
-        .premium-card .value { font-size: 17px; font-weight: 800; color: #ffffff; }
-        .premium-card .subtext { font-size: 11.5px; color: #94a3b8; margin-top: 5px; line-height: 1.4; }
+        /* ── CARDS ───────────────────────────────────────────── */
+        .cards-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            padding: 14px 16px 10px;
+            flex-shrink: 0;
+        }
+        .info-card {
+            padding: 12px 14px;
+            border-radius: 12px;
+            background: var(--bg-deep);
+            border: 1px solid var(--border);
+        }
+        .info-card.pass-card { border-color: #3b1a6e; background: linear-gradient(135deg,#1a0b3d,#0f172a); }
+        .info-card.budget-card { border-color: #1a3a8a; background: linear-gradient(135deg,#0a1f4e,#0f172a); }
+        .info-card h3 {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        .pass-card h3 { color: var(--purple); }
+        .budget-card h3 { color: var(--accent); }
+        .info-card .val {
+            font-family: 'Syne', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-hi);
+            line-height: 1.3;
+        }
+        .info-card .sub {
+            font-size: 10px;
+            color: var(--text-lo);
+            margin-top: 4px;
+            line-height: 1.3;
+        }
 
-        /* Contenedor de Destinos */
-        .destinations-container { flex: 1; padding: 20px; overflow-y: auto; }
-        .destinations-list { list-style: none; position: relative; }
-        .destinations-list::before { content: ''; position: absolute; left: 16px; top: 24px; bottom: 24px; width: 2px; background: #475569; z-index: 1; }
+        /* ── ROUTE LIST ──────────────────────────────────────── */
+        .destinations-wrap {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 16px 14px;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+        }
+        .destinations-wrap::-webkit-scrollbar { width: 3px; }
+        .destinations-wrap::-webkit-scrollbar-track { background: transparent; }
+        .destinations-wrap::-webkit-scrollbar-thumb { background: var(--border-mid); border-radius: 3px; }
 
-        .destination-item { background: #111827; padding: 16px; margin-bottom: 14px; border-radius: 12px; border: 1px solid #334155; position: relative; z-index: 2; }
-        .item-main { display: flex; align-items: center; justify-content: space-between; }
-        .destination-info { display: flex; align-items: center; gap: 14px; }
-        
-        .badge-number { background: #3b82f6; color: #ffffff; font-weight: 800; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; }
-        .badge-number.origin { background: #10b981; }
-        .badge-number.final-stop { background: #ef4444; }
-        .city-name { font-size: 15px; font-weight: 700; color: #f8fafc; }
-        
-        .stay-counter { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #cbd5e1; margin-top: 10px; margin-left: 40px; background: #1e293b; padding: 6px 12px; border-radius: 6px; width: fit-content; }
-        .stay-counter input { width: 50px; padding: 4px; background: #0f172a; border: 1px solid #475569; border-radius: 4px; color: white; text-align: center; font-weight: bold; }
-        .stay-counter.origin-label { background: #064e3b; color: #a7f3d0; font-weight: 600; }
-        .stay-counter.final-label { background: #7f1d1d; color: #fca5a5; font-weight: 600; }
+        .route-list { list-style: none; position: relative; }
+        .route-list::before {
+            content: '';
+            position: absolute;
+            left: 13px; top: 26px; bottom: 26px;
+            width: 1.5px;
+            background: var(--border-mid);
+            z-index: 0;
+        }
 
-        /* Alertas de Trayecto e Info de Trenes */
-        .train-leg-info { margin-top: 12px; margin-left: 40px; padding: 10px 14px; background: #1e293b; border-left: 3px solid #f97316; font-size: 12.5px; color: #cbd5e1; border-radius: 0 8px 8px 0; }
-        .train-leg-info.tunnel-leg { border-left-color: #a855f7; background: #2e1065; }
-        .train-leg-info.country-warning { border-left-color: #eab308; background: #451a03; color: #fef08a; font-size: 11.5px; margin-top: 6px; }
+        .dest-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 14px;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+            transition: border-color 0.2s;
+        }
+        .dest-item:active { border-color: var(--border-mid); }
 
-        .btn-delete { background: none; border: none; color: #64748b; cursor: pointer; font-size: 16px; }
-        .btn-delete:hover { color: #ef4444; }
+        .item-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .item-left { display: flex; align-items: center; gap: 12px; }
 
-        /* Secciones de Botones Inferiores */
-        .action-container { padding: 14px 20px; background: #111827; border-top: 1px solid #334155; display: flex; flex-direction: column; gap: 10px; }
-        .btn-finish { width: 100%; padding: 14px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3); }
-        .btn-finish:hover { filter: brightness(1.1); }
-        .btn-return { width: 100%; padding: 10px; background: #334155; color: #e2e8f0; border: 1px dashed #475569; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-        .btn-return:hover { background: #475569; color: white; }
+        .badge {
+            width: 27px; height: 27px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: #fff;
+            font-family: 'Syne', sans-serif;
+            font-size: 12px;
+            font-weight: 800;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .badge.origin { background: var(--green); }
+        .badge.final  { background: var(--red); }
 
-        #map { flex: 1; height: 100%; background: #0f172a; }
-        .marker-pin { background: #111827; color: #f59e0b; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; border: 2.5px solid #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.4); font-size: 13px; }
-        .marker-pin.origin-pin { color: #10b981; }
-        .marker-pin.final-pin { color: #ef4444; }
+        .city-name {
+            font-family: 'Syne', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-hi);
+        }
 
-        /* Modal Flotante */
-        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 3000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .btn-del {
+            background: none;
+            border: none;
+            color: var(--text-lo);
+            cursor: pointer;
+            font-size: 15px;
+            padding: 6px;
+            border-radius: 6px;
+            line-height: 1;
+            min-width: 32px; min-height: 32px;
+            display: flex; align-items: center; justify-content: center;
+            transition: color 0.15s, background 0.15s;
+        }
+        .btn-del:hover, .btn-del:active { color: var(--red); background: rgba(239,68,68,0.1); }
+
+        .stay-counter {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 12px; color: var(--text-mid);
+            margin: 9px 0 0 38px;
+            background: var(--bg-surface);
+            padding: 6px 12px;
+            border-radius: 7px;
+            width: fit-content;
+        }
+        .stay-counter input {
+            width: 44px; padding: 4px 6px;
+            background: var(--bg-deep);
+            border: 1px solid var(--border-mid);
+            border-radius: 5px;
+            color: #fff;
+            text-align: center;
+            font-weight: 700;
+            font-size: 13px;
+            font-family: 'Syne', sans-serif;
+        }
+        .stay-counter.origin-lbl { background: #052e1b; color: #6ee7b7; font-weight: 600; }
+        .stay-counter.final-lbl  { background: #3f0f0f; color: #fca5a5; font-weight: 600; }
+
+        .leg-info {
+            margin: 8px 0 0 38px;
+            padding: 9px 12px;
+            background: var(--bg-surface);
+            border-left: 3px solid var(--orange);
+            border-radius: 0 8px 8px 0;
+            font-size: 11.5px;
+            color: var(--text-mid);
+            line-height: 1.5;
+        }
+        .leg-info.tunnel  { border-left-color: var(--purple); background: #1a0a38; }
+        .leg-info.warning { border-left-color: var(--yellow); background: #2d1a00; color: #fef08a; margin-top: 6px; }
+        .leg-info b { color: var(--text-hi); }
+
+        /* ── BOTTOM ACTIONS ──────────────────────────────────── */
+        .action-bar {
+            padding: 12px 16px;
+            padding-bottom: calc(12px + var(--safe-bottom));
+            background: var(--bg-deep);
+            border-top: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .btn-primary {
+            width: 100%; padding: 14px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: #fff;
+            border: none;
+            border-radius: 11px;
+            font-size: 14px;
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 18px rgba(16,185,129,0.3);
+            transition: filter 0.15s, transform 0.1s;
+            min-height: 48px;
+        }
+        .btn-primary:active { filter: brightness(0.9); transform: scale(0.98); }
+
+        .btn-return {
+            width: 100%; padding: 11px;
+            background: var(--bg-surface);
+            color: var(--text-mid);
+            border: 1.5px dashed var(--border-mid);
+            border-radius: 9px;
+            font-size: 13px;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+            min-height: 44px;
+            display: none;
+        }
+        .btn-return:active { background: var(--border-mid); color: #fff; }
+
+        /* ── MODAL ───────────────────────────────────────────── */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(7,13,26,0.82);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.3s ease;
+            padding: 0;
+        }
         .modal-overlay.active { opacity: 1; pointer-events: auto; }
-        .modal-box { background: #1e293b; width: 90%; max-width: 600px; border-radius: 16px; border: 1px solid #475569; box-shadow: 0 20px 50px rgba(0,0,0,0.6); padding: 28px; display: flex; flex-direction: column; gap: 20px; max-height: 85vh; }
-        .modal-box h2 { font-size: 24px; font-weight: 800; color: white; border-bottom: 1px solid #334155; padding-bottom: 12px; }
-        .modal-body { overflow-y: auto; display: flex; flex-direction: column; gap: 16px; font-size: 14px; color: #cbd5e1; line-height: 1.5; }
-        .modal-section { background: #111827; padding: 16px; border-radius: 10px; border: 1px solid #334155; }
-        .modal-section h3 { font-size: 13px; color: #3b82f6; text-transform: uppercase; margin-bottom: 6px; }
-        .btn-close-modal { padding: 12px; background: #334155; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; text-align: center; }
+
+        .modal-box {
+            background: var(--bg-surface);
+            width: 100%;
+            max-width: 560px;
+            border-radius: var(--sheet-radius) var(--sheet-radius) 0 0;
+            border: 1px solid var(--border-mid);
+            border-bottom: none;
+            box-shadow: 0 -20px 60px rgba(0,0,0,0.7);
+            padding: 6px 24px 20px;
+            padding-bottom: calc(20px + var(--safe-bottom));
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            max-height: 88vh;
+            overflow: hidden;
+            transform: translateY(30px);
+            transition: transform 0.3s ease;
+        }
+        .modal-overlay.active .modal-box { transform: translateY(0); }
+
+        .modal-handle {
+            width: 40px; height: 4px;
+            background: var(--border-mid);
+            border-radius: 2px;
+            margin: 4px auto 6px;
+            flex-shrink: 0;
+        }
+        .modal-box h2 {
+            font-family: 'Syne', sans-serif;
+            font-size: 20px;
+            font-weight: 800;
+            color: #fff;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 12px;
+            flex-shrink: 0;
+        }
+        .modal-body {
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            font-size: 13px;
+            color: var(--text-mid);
+            line-height: 1.55;
+        }
+        .modal-section {
+            background: var(--bg-card);
+            padding: 14px 16px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+        .modal-section h3 {
+            font-size: 10px;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .modal-section p { margin-bottom: 4px; }
+        .btn-close {
+            padding: 13px;
+            background: var(--border-mid);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: 'Syne', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            flex-shrink: 0;
+            min-height: 48px;
+        }
+
+        /* ── MOBILE BOTTOM SHEET ─────────────────────────────── */
+        @media (max-width: 768px) {
+            .app-shell { flex-direction: column; }
+
+            #map {
+                position: fixed;
+                inset: 0;
+                z-index: 1;
+                height: 100% !important;
+            }
+
+            #sidebar {
+                position: fixed;
+                bottom: 0; left: 0; right: 0;
+                width: 100%;
+                min-width: unset;
+                height: auto;
+                max-height: 88vh;
+                border-right: none;
+                border-top: 1px solid var(--border-mid);
+                border-radius: var(--sheet-radius) var(--sheet-radius) 0 0;
+                z-index: 200;
+                transform: translateY(calc(100% - 88px - var(--safe-bottom)));
+                transition: transform 0.38s cubic-bezier(0.32, 0.72, 0, 1);
+                box-shadow: 0 -12px 40px rgba(0,0,0,0.7);
+                /* Override for mobile so inner sections also work */
+                overflow: visible;
+            }
+            #sidebar.expanded {
+                transform: translateY(0);
+            }
+
+            .sheet-drag-handle {
+                display: flex;
+            }
+
+            .header {
+                display: none;
+            }
+
+            .cards-row {
+                grid-template-columns: 1fr 1fr;
+                padding: 10px 14px 8px;
+            }
+            .info-card .val { font-size: 11.5px; }
+            .info-card h3 { font-size: 8px; }
+
+            .search-wrap { padding: 10px 14px; }
+
+            .destinations-wrap {
+                max-height: 45vh;
+            }
+
+            .action-bar {
+                padding: 10px 14px;
+                padding-bottom: calc(10px + var(--safe-bottom));
+            }
+
+            /* Compact city name on mobile */
+            .city-name { font-size: 13px; }
+            .leg-info { font-size: 11px; }
+
+            /* Float the map toggle on mobile */
+            .map-fab {
+                display: flex;
+            }
+        }
+
+        /* Sheet drag handle (mobile only) */
+        .sheet-drag-handle {
+            display: none;
+            padding: 10px 0 6px;
+            justify-content: center;
+            cursor: grab;
+            flex-shrink: 0;
+        }
+        .sheet-drag-handle::before {
+            content: '';
+            width: 44px; height: 4px;
+            background: var(--border-mid);
+            border-radius: 2px;
+        }
+
+        /* Mobile peek label */
+        .sheet-peek {
+            display: none;
+        }
+        @media (max-width: 768px) {
+            .sheet-peek {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 0 16px 10px;
+                flex-shrink: 0;
+            }
+            .sheet-peek-title {
+                font-family: 'Syne', sans-serif;
+                font-size: 14px;
+                font-weight: 700;
+                color: var(--text-hi);
+            }
+            .sheet-peek-badge {
+                font-size: 11px;
+                color: var(--text-lo);
+                background: var(--bg-deep);
+                padding: 3px 10px;
+                border-radius: 20px;
+                border: 1px solid var(--border);
+            }
+        }
+
+        /* Map FAB (floating action button) - desktop hidden */
+        .map-fab {
+            display: none;
+            position: fixed;
+            bottom: calc(102px + var(--safe-bottom));
+            right: 16px;
+            z-index: 300;
+            gap: 8px;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+        .fab-btn {
+            width: 46px; height: 46px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+            transition: transform 0.15s;
+        }
+        .fab-btn:active { transform: scale(0.92); }
+        .fab-locate {
+            background: var(--bg-surface);
+            color: var(--accent);
+            border: 1px solid var(--border-mid);
+        }
+        .fab-add {
+            background: var(--accent);
+            color: #fff;
+            width: 52px; height: 52px;
+            font-size: 22px;
+        }
+
+        /* Marker styles */
+        .marker-pin {
+            background: var(--bg-card);
+            color: var(--orange);
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            border: 2.5px solid #fff;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.5);
+            font-size: 12px;
+        }
+        .marker-pin.origin-pin { color: var(--green); }
+        .marker-pin.final-pin  { color: var(--red); }
+
+        /* Leaflet attribution mobile */
+        @media (max-width: 768px) {
+            .leaflet-control-attribution {
+                font-size: 9px !important;
+            }
+        }
+
+        /* Scrollbar global */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-mid); border-radius: 4px; }
     </style>
 </head>
 <body>
 
-    <div id="sidebar">
-        <div class="header">
-            <h1>🇪🇺 Interrail Planner 2026</h1>
-            <p>Control de enrutamiento ferroviario por el Eurotúnel y validación de trayectos nacionales en tu país de origen.</p>
+<div class="app-shell">
+    <div id="map"></div>
+
+    <div id="sidebar" id="sidebar">
+        <!-- Mobile drag handle + peek -->
+        <div class="sheet-drag-handle" id="sheet-handle"></div>
+        <div class="sheet-peek">
+            <span class="sheet-peek-title">🇪🇺 Interrail Planner</span>
+            <span class="sheet-peek-badge" id="peek-count">Sin destinos</span>
         </div>
 
-        <div class="search-container">
-            <div class="search-box">
-                <input type="text" id="city-input" placeholder="Añade origen de salida (Ej: Madrid, Barcelona)..." autocomplete="off">
+        <!-- Desktop header -->
+        <div class="header">
+            <h1>🇪🇺 Interrail Planner 2026</h1>
+            <p>Planificador ferroviario europeo · Eurotúnel · Validación Interrail</p>
+        </div>
+
+        <div class="search-wrap">
+            <div class="search-inner">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="city-input" placeholder="Añade ciudad de origen o destino..." autocomplete="off">
             </div>
             <ul id="suggestions" class="suggestions-list"></ul>
         </div>
 
-        <div class="cards-container">
-            <div class="premium-card">
-                <h3>Pase Oficial Recomendado</h3>
-                <div class="value" id="recommended-pass">-</div>
-                <div class="subtext" id="pass-subtext">Optimizado según días de tránsito internacional activo.</div>
+        <div class="cards-row">
+            <div class="info-card pass-card">
+                <h3>Pase Óptimo</h3>
+                <div class="val" id="recommended-pass">—</div>
+                <div class="sub" id="pass-subtext">Días de tránsito calculados</div>
             </div>
-
-            <div class="premium-card budget">
-                <h3>Presupuesto Estimado (Transporte)</h3>
-                <div class="value" id="total-price">0 €</div>
-                <div class="subtext" id="budget-subtext">Precios base e histórico de reservas de asientos incluidos.</div>
+            <div class="info-card budget-card">
+                <h3>Coste Estimado</h3>
+                <div class="val" id="total-price">0 €</div>
+                <div class="sub" id="budget-subtext">Con reservas incluidas</div>
             </div>
         </div>
 
-        <div class="destinations-container">
-            <button class="btn-return" id="btn-trigger-return" onclick="addFinalReturnStop()" style="display: none; margin-bottom: 12px;">🔄 Añadir Última Parada (Volver al Origen)</button>
-            <ul class="destinations-list" id="route-list"></ul>
+        <div class="destinations-wrap">
+            <button class="btn-return" id="btn-trigger-return" onclick="addFinalReturnStop()">🔄 Cerrar ruta (Volver al Origen)</button>
+            <ul class="route-list" id="route-list"></ul>
         </div>
 
-        <div class="action-container">
-            <button class="btn-finish" onclick="openSummaryModal()">💾 Finalizar Viaje</button>
+        <div class="action-bar">
+            <button class="btn-primary" onclick="openSummaryModal()">💾 Ver Resumen del Viaje</button>
         </div>
     </div>
+</div>
 
-    <div id="map"></div>
+<!-- FABs for mobile -->
+<div class="map-fab">
+    <button class="fab-btn fab-locate" onclick="fitMapBounds()" title="Centrar mapa">🎯</button>
+    <button class="fab-btn fab-add" onclick="focusSearch()" title="Añadir ciudad">＋</button>
+</div>
 
-    <div id="summary-modal" class="modal-overlay">
-        <div class="modal-box">
-            <h2>🗺️ Resumen Ejecutivo de tu Ruta</h2>
-            <div class="modal-body" id="modal-content-body"></div>
-            <button class="btn-close-modal" onclick="closeSummaryModal()">Volver al Editor</button>
-        </div>
+<!-- Summary modal -->
+<div id="summary-modal" class="modal-overlay">
+    <div class="modal-box">
+        <div class="modal-handle"></div>
+        <h2>🗺️ Resumen del Viaje</h2>
+        <div class="modal-body" id="modal-content-body"></div>
+        <button class="btn-close" onclick="closeSummaryModal()">← Volver al Editor</button>
     </div>
+</div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ─── STATE ────────────────────────────────────────────────────
+let travelRoute = [];
+let debounceTimer;
+window.globalOptimalPassInfo = null;
+let homeCountry = "";
+let isLoopClosed = false;
+let mapBounds = [];
 
-    <script>
-        let travelRoute = [];
-        let debounceTimer;
-        window.globalOptimalPassInfo = null;
-        let homeCountry = ""; 
-        let isLoopClosed = false;
+// ─── MAP INIT ─────────────────────────────────────────────────
+const map = L.map('map', { zoomControl: false, attributionControl: true })
+    .setView([47.5, 10.0], 5);
 
-        const map = L.map('map', { zoomControl: false }).setView([47.5, 10.0], 5);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { attribution: '© OpenStreetMap' }).addTo(map);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    attribution: '© OpenStreetMap'
+}).addTo(map);
 
-        let markersLayer = L.layerGroup().addTo(map);
-        let linesLayer = L.layerGroup().addTo(map);
+L.control.zoom({ position: 'topright' }).addTo(map);
 
-        const cityInput = document.getElementById('city-input');
-        const suggestionsLog = document.getElementById('suggestions');
+const markersLayer = L.layerGroup().addTo(map);
+const linesLayer   = L.layerGroup().addTo(map);
 
-        cityInput.addEventListener('input', () => {
-            clearTimeout(debounceTimer);
-            const query = cityInput.value.trim();
-            if (query.length < 3) { suggestionsLog.style.display = 'none'; return; }
-            debounceTimer = setTimeout(() => { fetchSuggestions(query); }, 250);
-        });
+// ─── MOBILE BOTTOM SHEET ──────────────────────────────────────
+const sidebar = document.getElementById('sidebar');
+const handle  = document.getElementById('sheet-handle');
+let sheetExpanded = false;
+let dragStartY = 0, dragStartTranslate = 0, isDragging = false;
 
-        async function fetchSuggestions(query) {
-            const countriesEurope = "es,fr,de,it,nl,be,lu,ch,at,gb,ie,dk,no,se,fi,pl,cz,sk,hu,ro,bg,gr,hr,si,ee,lv,lt,pt";
-            const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(query)}&countrycodes=${countriesEurope}&limit=10`;
-            try {
-                const response = await fetch(url);
-                const data = await response.json();
-                suggestionsLog.innerHTML = "";
-                if (data && data.length > 0) {
-                    data.forEach(place => {
-                        const nameParts = place.display_name.split(',');
-                        const cityName = nameParts[0];
-                        const countryName = nameParts[nameParts.length - 1].trim();
-                        const countryCode = place.address.country_code ? place.address.country_code.toUpperCase() : "";
+function isMobile() { return window.innerWidth <= 768; }
 
-                        const li = document.createElement('li');
-                        li.innerText = `${cityName} (${countryName})`;
-                        li.onclick = () => addPlace(cityName, parseFloat(place.lat), parseFloat(place.lon), countryCode);
-                        suggestionsLog.appendChild(li);
-                    });
-                    suggestionsLog.style.display = 'block';
-                }
-            } catch (e) { console.error(e); }
-        }
+function expandSheet() {
+    sheetExpanded = true;
+    sidebar.classList.add('expanded');
+}
+function collapseSheet() {
+    sheetExpanded = false;
+    sidebar.classList.remove('expanded');
+}
+function toggleSheet() {
+    sheetExpanded ? collapseSheet() : expandSheet();
+}
 
-        function addPlace(name, lat, lon, countryCode) {
-            if (isLoopClosed) {
-                alert("Has cerrado tu ruta con una Última Parada. Elimina la vuelta a casa si quieres meter más destinos.");
-                return;
-            }
-            if (travelRoute.length === 0) {
-                homeCountry = countryCode; 
-            }
-            if (travelRoute.some(c => c.name === name)) {
-                alert("Esta ciudad ya está en tu itinerario.");
-                return;
-            }
-            let isFirst = travelRoute.length === 0;
-            travelRoute.push({ name, coords: [lat, lon], country: countryCode, stayDays: isFirst ? 0 : 2, isReturnNode: false });
-            cityInput.value = "";
-            suggestionsLog.style.display = 'none';
-            document.getElementById('btn-trigger-return').style.display = 'block';
-            updateUI();
-        }
+// Tap on handle or peek area to toggle
+handle.addEventListener('click', toggleSheet);
+document.querySelector('.sheet-peek').addEventListener('click', toggleSheet);
 
-        function addFinalReturnStop() {
-            if (travelRoute.length < 2) {
-                alert("Añade al menos un destino internacional antes de programar el regreso.");
-                return;
-            }
-            if (isLoopClosed) return;
-            
-            let originNode = travelRoute[0];
-            travelRoute.push({
-                name: originNode.name,
-                coords: originNode.coords,
-                country: originNode.country,
-                stayDays: 0,
-                isReturnNode: true
-            });
-            isLoopClosed = true;
-            document.getElementById('btn-trigger-return').style.display = 'none';
-            updateUI();
-        }
+// Touch drag
+handle.addEventListener('touchstart', onDragStart, { passive: true });
+document.addEventListener('touchmove', onDragMove, { passive: false });
+document.addEventListener('touchend', onDragEnd);
 
-        function updateStayDays(index, value) {
-            let days = parseInt(value);
-            if (isNaN(days) || days < 1) days = 1;
-            travelRoute[index].stayDays = days;
-            calculateOptimalPass();
-        }
+function onDragStart(e) {
+    if (!isMobile()) return;
+    isDragging = true;
+    dragStartY = e.touches[0].clientY;
+    const transform = getComputedStyle(sidebar).transform;
+    const mat = new DOMMatrix(transform);
+    dragStartTranslate = mat.m42;
+    sidebar.style.transition = 'none';
+}
+function onDragMove(e) {
+    if (!isDragging || !isMobile()) return;
+    const dy = e.touches[0].clientY - dragStartY;
+    let newY = dragStartTranslate + dy;
+    // Clamp: can't drag above 0 or below 90% of sidebar height
+    newY = Math.max(0, newY);
+    sidebar.style.transform = `translateY(${newY}px)`;
+    e.preventDefault();
+}
+function onDragEnd(e) {
+    if (!isDragging || !isMobile()) return;
+    isDragging = false;
+    sidebar.style.transition = '';
+    const dy = e.changedTouches[0].clientY - dragStartY;
+    if (dy < -40) expandSheet();
+    else if (dy > 40) collapseSheet();
+    else sheetExpanded ? expandSheet() : collapseSheet();
+}
 
-        function removeDestination(index) {
-            if (travelRoute[index].isReturnNode) {
-                isLoopClosed = false;
-                document.getElementById('btn-trigger-return').style.display = 'block';
-            }
-            travelRoute.splice(index, 1);
-            if (travelRoute.length === 0) {
-                homeCountry = "";
-                isLoopClosed = false;
-                document.getElementById('btn-trigger-return').style.display = 'none';
-            } else {
-                travelRoute[0].stayDays = 0;
-            }
-            updateUI();
-        }
+// On resize, reset sheet state
+window.addEventListener('resize', () => {
+    if (!isMobile()) {
+        sidebar.style.transform = '';
+        sidebar.classList.remove('expanded');
+    }
+});
 
-        // FUERZA EL TRAZADO POR EL EUROTÚNEL / CALAIS SI VA DE FRANCIA A REINO UNIDO
-        async function drawChannelTunnelRoute(coord1, coord2) {
-            const calaisCoords = [50.9400, 1.8155]; // Coordenadas de la entrada del Eurotúnel
-            let url = `https://router.project-osrm.org/route/v1/driving/${coord1[1]},${coord1[0]};${calaisCoords[1]},${calaisCoords[0]};${coord2[1]},${coord2[0]}?overview=full&geometries=geojson`;
-            
-            try {
-                const response = await fetch(url);
-                const data = await response.json();
-                if (data.routes && data.routes.length > 0) {
-                    const coordinates = data.routes[0].geometry.coordinates;
-                    L.polyline(coordinates.map(c => [c[1], c[0]]), {
-                        color: '#a855f7', weight: 5, opacity: 0.95
-                    }).addTo(linesLayer);
-                    return Math.round(data.routes[0].distance / 1000);
-                }
-            } catch (e) { console.error(e); }
-            return 450;
-        }
+// ─── SEARCH ───────────────────────────────────────────────────
+const cityInput     = document.getElementById('city-input');
+const suggestionsList = document.getElementById('suggestions');
 
-        async function drawStandardRoute(coord1, coord2) {
-            let url = `https://router.project-osrm.org/route/v1/driving/${coord1[1]},${coord1[0]};${coord2[1]},${coord2[0]}?overview=full&geometries=geojson`;
-            try {
-                const response = await fetch(url);
-                const data = await response.json();
-                if (data.routes && data.routes.length > 0) {
-                    const coordinates = data.routes[0].geometry.coordinates;
-                    L.polyline(coordinates.map(c => [c[1], c[0]]), {
-                        color: '#f97316', weight: 4, opacity: 0.85
-                    }).addTo(linesLayer);
-                    return Math.round(data.routes[0].distance / 1000);
-                }
-            } catch (e) {}
-            return 300;
-        }
+cityInput.addEventListener('input', () => {
+    clearTimeout(debounceTimer);
+    const q = cityInput.value.trim();
+    if (q.length < 3) { suggestionsList.style.display = 'none'; return; }
+    debounceTimer = setTimeout(() => fetchSuggestions(q), 280);
+});
 
-        async function updateUI() {
-            const listContainer = document.getElementById('route-list');
-            listContainer.innerHTML = "";
-            markersLayer.clearLayers();
-            linesLayer.clearLayers();
+// Close suggestions on outside tap
+document.addEventListener('click', e => {
+    if (!e.target.closest('.search-wrap')) {
+        suggestionsList.style.display = 'none';
+    }
+});
 
-            let bounds = [];
-            window.currentTotalReservations = 0;
-            window.nationalJourneysCount = 0;
-
-            for (let index = 0; index < travelRoute.length; index++) {
-                const city = travelRoute[index];
-                bounds.push(city.coords);
-                let legHTML = '';
-                let stayHTML = '';
-                let warningHTML = '';
-
-                // Validación de Normas Interrail sobre el País de Residencia
-                if (index > 0 && city.country === homeCountry && !city.isReturnNode) {
-                    window.nationalJourneysCount++;
-                    warningHTML = `<div class="train-leg-info country-warning">⚠️ Tránsito en tu país de residencia (${city.country}). Recuerda que Interrail limita esto a un máximo de 2 trayectos totales (Salida/Regreso).</div>`;
-                }
-
-                if (index === 0) {
-                    stayHTML = `<div class="stay-counter origin-label">🟢 Estación de Origen (${city.country})</div>`;
-                } else if (city.isReturnNode) {
-                    stayHTML = `<div class="stay-counter final-label">🔴 Última Parada: Regreso a Casa</div>`;
-                    const prevCity = travelRoute[index - 1];
-                    const distanceKm = await drawStandardRoute(prevCity.coords, city.coords);
-                    legHTML = `
-                        <div class="train-leg-info">
-                            <span><b>🏠 Viaje de Regreso Nacional (Inbound Journey)</b></span>
-                            <span style="color: #94a3b8;">Distancia de vuelta: ~${distanceKm} km. Cubierto por la norma especial de Interrail.</span>
-                        </div>`;
-                } else {
-                    const prevCity = travelRoute[index - 1];
-                    let distanceKm;
-                    let isTunnel = false;
-
-                    // Detectar si cruzamos el canal entre Francia/Bélgica y UK
-                    if ((prevCity.country === "GB" && (city.country === "FR" || city.country === "BE")) || 
-                        (city.country === "GB" && (prevCity.country === "FR" || prevCity.country === "BE"))) {
-                        isTunnel = true;
-                        distanceKm = await drawChannelTunnelRoute(prevCity.coords, city.coords);
-                    } else {
-                        distanceKm = await drawStandardRoute(prevCity.coords, city.coords);
-                    }
-                    
-                    let legCost = isTunnel ? 35 : 12; // Suplemento Eurostar fijado en 35€ por reserva obligatorio
-                    let typeText = isTunnel ? "🚄 Eurostar de Alta Velocidad (Vía Eurotúnel Canal de la Mancha)" : "🛤️ Red Ferroviaria Internacional";
-                    window.currentTotalReservations += legCost;
-                    
-                    legHTML = `
-                        <div class="train-leg-info ${isTunnel ? 'tunnel-leg' : ''}">
-                            <span><b>${typeText}</b></span>
-                            <span style="color: #cbd5e1;">Distancia: ~${distanceKm} km | Reserva: +${legCost}€</span>
-                        </div>` + warningHTML;
-
-                    stayHTML = `
-                        <div class="stay-counter">
-                            <span>Estancia:</span>
-                            <input type="number" min="1" value="${city.stayDays}" onchange="updateStayDays(${index}, this.value)">
-                            <span>días</span>
-                        </div>`;
-                }
-
+async function fetchSuggestions(query) {
+    const codes = "es,fr,de,it,nl,be,lu,ch,at,gb,ie,dk,no,se,fi,pl,cz,sk,hu,ro,bg,gr,hr,si,ee,lv,lt,pt";
+    const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(query)}&countrycodes=${codes}&limit=10`;
+    try {
+        const data = await (await fetch(url)).json();
+        suggestionsList.innerHTML = "";
+        if (data?.length) {
+            data.forEach(place => {
+                const parts = place.display_name.split(',');
+                const cityName    = parts[0].trim();
+                const countryName = parts[parts.length - 1].trim();
+                const cc = (place.address.country_code || '').toUpperCase();
                 const li = document.createElement('li');
-                li.className = 'destination-item';
-                li.innerHTML = `
-                    <div class="item-main">
-                        <div class="destination-info">
-                            <span class="badge-number ${index === 0 ? 'origin' : (city.isReturnNode ? 'final-stop' : '')}">${index + 1}</span>
-                            <span class="city-name">${city.name}</span>
-                        </div>
-                        <button class="btn-delete" onclick="removeDestination(${index})">✕</button>
-                    </div>
-                    ${stayHTML}
-                    ${legHTML}
-                `;
-                listContainer.appendChild(li);
+                li.innerText = `${cityName} (${countryName})`;
+                li.addEventListener('click', () => {
+                    addPlace(cityName, parseFloat(place.lat), parseFloat(place.lon), cc);
+                });
+                suggestionsList.appendChild(li);
+            });
+            suggestionsList.style.display = 'block';
+        }
+    } catch (e) { console.error(e); }
+}
 
-                L.marker(city.coords, {
-                    icon: L.divIcon({
-                        className: 'custom-div-icon',
-                        html: `<div class="marker-pin ${index === 0 ? 'origin-pin' : (city.isReturnNode ? 'final-pin' : '')}">${index + 1}</div>`,
-                        iconSize: [28, 28], iconAnchor: [14, 14]
-                    })
-                }).addTo(markersLayer);
-            }
+function focusSearch() {
+    expandSheet();
+    setTimeout(() => cityInput.focus(), 350);
+}
 
-            calculateOptimalPass();
-            if (bounds.length > 1) { map.fitBounds(L.latLngBounds(bounds), { padding: [60, 60] }); }
+// ─── ADD / REMOVE PLACES ──────────────────────────────────────
+function addPlace(name, lat, lon, cc) {
+    if (isLoopClosed) {
+        alert("Has cerrado tu ruta. Elimina la última parada si quieres añadir más destinos.");
+        return;
+    }
+    if (travelRoute.length === 0) homeCountry = cc;
+    if (travelRoute.some(c => c.name === name)) { alert("Esta ciudad ya está en el itinerario."); return; }
+
+    travelRoute.push({
+        name, coords: [lat, lon], country: cc,
+        stayDays: travelRoute.length === 0 ? 0 : 2,
+        isReturnNode: false
+    });
+
+    cityInput.value = "";
+    suggestionsList.style.display = 'none';
+    document.getElementById('btn-trigger-return').style.display = 'block';
+    updateUI();
+
+    if (isMobile()) expandSheet();
+}
+
+function addFinalReturnStop() {
+    if (travelRoute.length < 2) { alert("Añade al menos un destino internacional antes."); return; }
+    if (isLoopClosed) return;
+    const origin = travelRoute[0];
+    travelRoute.push({ name: origin.name, coords: origin.coords, country: origin.country, stayDays: 0, isReturnNode: true });
+    isLoopClosed = true;
+    document.getElementById('btn-trigger-return').style.display = 'none';
+    updateUI();
+}
+
+function removeDestination(index) {
+    if (travelRoute[index].isReturnNode) {
+        isLoopClosed = false;
+        document.getElementById('btn-trigger-return').style.display = 'block';
+    }
+    travelRoute.splice(index, 1);
+    if (travelRoute.length === 0) {
+        homeCountry = "";
+        isLoopClosed = false;
+        document.getElementById('btn-trigger-return').style.display = 'none';
+    } else {
+        travelRoute[0].stayDays = 0;
+    }
+    updateUI();
+}
+
+function updateStayDays(index, value) {
+    let days = parseInt(value);
+    if (isNaN(days) || days < 1) days = 1;
+    travelRoute[index].stayDays = days;
+    calculateOptimalPass();
+}
+
+// ─── ROUTING ──────────────────────────────────────────────────
+async function drawChannelTunnelRoute(c1, c2) {
+    const calais = [50.9400, 1.8155];
+    const url = `https://router.project-osrm.org/route/v1/driving/${c1[1]},${c1[0]};${calais[1]},${calais[0]};${c2[1]},${c2[0]}?overview=full&geometries=geojson`;
+    try {
+        const data = await (await fetch(url)).json();
+        if (data.routes?.[0]) {
+            const coords = data.routes[0].geometry.coordinates;
+            L.polyline(coords.map(c => [c[1],c[0]]), { color:'#a855f7', weight:5, opacity:0.9 }).addTo(linesLayer);
+            return Math.round(data.routes[0].distance / 1000);
+        }
+    } catch(e) {}
+    return 450;
+}
+
+async function drawStandardRoute(c1, c2) {
+    const url = `https://router.project-osrm.org/route/v1/driving/${c1[1]},${c1[0]};${c2[1]},${c2[0]}?overview=full&geometries=geojson`;
+    try {
+        const data = await (await fetch(url)).json();
+        if (data.routes?.[0]) {
+            const coords = data.routes[0].geometry.coordinates;
+            L.polyline(coords.map(c => [c[1],c[0]]), { color:'#f97316', weight:4, opacity:0.85 }).addTo(linesLayer);
+            return Math.round(data.routes[0].distance / 1000);
+        }
+    } catch(e) {}
+    return 300;
+}
+
+// ─── UI UPDATE ────────────────────────────────────────────────
+async function updateUI() {
+    const list = document.getElementById('route-list');
+    list.innerHTML = "";
+    markersLayer.clearLayers();
+    linesLayer.clearLayers();
+    mapBounds = [];
+    window.currentTotalReservations = 0;
+    window.nationalJourneysCount = 0;
+
+    // Update peek badge
+    const peekBadge = document.getElementById('peek-count');
+    peekBadge.textContent = travelRoute.length > 0
+        ? `${travelRoute.length} ciudad${travelRoute.length > 1 ? 'es' : ''}`
+        : 'Sin destinos';
+
+    for (let i = 0; i < travelRoute.length; i++) {
+        const city = travelRoute[i];
+        mapBounds.push(city.coords);
+        let legHTML = '', stayHTML = '', warningHTML = '';
+
+        if (i > 0 && city.country === homeCountry && !city.isReturnNode) {
+            window.nationalJourneysCount++;
+            warningHTML = `<div class="leg-info warning">⚠️ Tránsito en país de residencia (${city.country}). Interrail limita a 2 trayectos nacionales (Salida/Regreso).</div>`;
         }
 
-        function calculateOptimalPass() {
-            const passEl = document.getElementById('recommended-pass');
-            const passSubEl = document.getElementById('pass-subtext');
-            const priceEl = document.getElementById('total-price');
-            const subtextEl = document.getElementById('budget-subtext');
+        if (i === 0) {
+            stayHTML = `<div class="stay-counter origin-lbl">🟢 Origen (${city.country})</div>`;
+        } else if (city.isReturnNode) {
+            stayHTML = `<div class="stay-counter final-lbl">🔴 Regreso a casa</div>`;
+            const prev = travelRoute[i - 1];
+            const km = await drawStandardRoute(prev.coords, city.coords);
+            legHTML = `<div class="leg-info"><b>🏠 Inbound Journey (Regreso nacional)</b><br><span style="color:var(--text-lo)">~${km} km · Cubierto por la norma Interrail</span></div>`;
+        } else {
+            const prev = travelRoute[i - 1];
+            const isTunnel = (prev.country === "GB" && (city.country === "FR" || city.country === "BE")) ||
+                             (city.country === "GB" && (prev.country === "FR" || prev.country === "BE"));
 
-            if (travelRoute.length === 0) {
-                passEl.innerText = "-"; priceEl.innerText = "0 €"; return;
-            }
+            let km = isTunnel
+                ? await drawChannelTunnelRoute(prev.coords, city.coords)
+                : await drawStandardRoute(prev.coords, city.coords);
 
-            let transitDays = Math.max(1, travelRoute.length - 1);
-            let totalStayDays = travelRoute.reduce((acc, c) => acc + c.stayDays, 0) + 1;
-            let totalReservations = window.currentTotalReservations || 0;
+            const cost = isTunnel ? 35 : 12;
+            const typeLabel = isTunnel
+                ? "🚄 Eurostar (Canal de la Mancha)"
+                : "🛤️ Red Ferroviaria Internacional";
+            window.currentTotalReservations += cost;
 
-            let options = [];
-            // TARIFAS ACTUALIZADAS INTERRAIL INTERNACIONAL 2026
-            if (transitDays <= 4)  options.push({ name: "Flexi Pass: 4 días en 1 mes", type: "Flexi", joven: 212, adulto: 283, maxDuration: 30 });
-            if (transitDays <= 5)  options.push({ name: "Flexi Pass: 5 días en 1 mes", type: "Flexi", joven: 239, adulto: 318, maxDuration: 30 });
-            if (transitDays <= 7)  options.push({ name: "Flexi Pass: 7 días en 1 mes", type: "Flexi", joven: 286, adulto: 381, maxDuration: 30 });
-            if (transitDays <= 10) options.push({ name: "Flexi Pass: 10 días en 2 meses", type: "Flexi", joven: 335, adulto: 447, maxDuration: 60 });
-
-            if (totalStayDays <= 15) options.push({ name: "Continuous Pass: 15 días seguidos", type: "Continuous", joven: 376, adulto: 501, maxDuration: 15 });
-            if (totalStayDays <= 22) options.push({ name: "Continuous Pass: 22 días seguidos", type: "Continuous", joven: 438, adulto: 584, maxDuration: 22 });
-
-            let validOptions = options.filter(opt => opt.maxDuration >= totalStayDays || opt.type === "Flexi");
-            let optimal = validOptions.reduce((prev, curr) => (prev.joven < curr.joven) ? prev : curr);
-
-            window.globalOptimalPassInfo = {
-                passName: optimal.name, totalStayDays, transitDays, totalReservations,
-                totalJoven: optimal.joven + totalReservations, totalAdulto: optimal.adulto + totalReservations
-            };
-
-            passEl.innerHTML = `🎫 ${optimal.name}`;
-            passSubEl.innerHTML = `Ruta calculada de <b>${totalStayDays} días de viaje</b> globales.`;
-            priceEl.innerHTML = `${optimal.joven + totalReservations} € (Joven) / ${optimal.adulto + totalReservations} € (Adulto)`;
-            subtextEl.innerHTML = `Incluye reservas del Eurostar por el Canal de la Mancha y tramos europeos obligatorios.`;
+            legHTML = `<div class="leg-info ${isTunnel ? 'tunnel' : ''}"><b>${typeLabel}</b><br><span style="color:var(--text-lo)">~${km} km · Reserva +${cost}€</span></div>${warningHTML}`;
+            stayHTML = `<div class="stay-counter"><span>Estancia:</span><input type="number" min="1" value="${city.stayDays}" onchange="updateStayDays(${i}, this.value)"><span>noches</span></div>`;
         }
 
-        function openSummaryModal() {
-            if (travelRoute.length < 2) { alert("Añade más destinos para generar el informe."); return; }
-            const modal = document.getElementById('summary-modal');
-            const body = document.getElementById('modal-content-body');
-            const info = window.globalOptimalPassInfo;
-
-            let pathStr = travelRoute.map(c => `${c.name} (${c.country})`).join(" ➔ ");
-
-            body.innerHTML = `
-                <div class="modal-section">
-                    <h3>🚂 Análisis de Normativa Nacional (País: ${homeCountry})</h3>
-                    <p>• Trayecto inicial saliendo de tu país (Outbound Journey): <b>Activado e Incluido</b>.</p>
-                    <p>• Trayecto final volviendo a tu país (Inbound Journey): <b>${isLoopClosed ? "Activado e Incluido con éxito" : "No solicitado (Ruta lineal)"}</b>.</p>
-                    <p style="margin-top: 6px; color:#eab308;">• Alertas de infracción en red local: <b>${window.nationalJourneysCount > 0 ? "¡Ojo! Has metido tránsitos intermedios en tu país. Podrías necesitar billetes locales extra." : "Ninguna. Cumples las bases de Interrail."}</b></p>
+        const li = document.createElement('li');
+        li.className = 'dest-item';
+        li.innerHTML = `
+            <div class="item-row">
+                <div class="item-left">
+                    <span class="badge ${i === 0 ? 'origin' : city.isReturnNode ? 'final' : ''}">${i + 1}</span>
+                    <span class="city-name">${city.name}</span>
                 </div>
+                <button class="btn-del" onclick="removeDestination(${i})" aria-label="Eliminar">✕</button>
+            </div>
+            ${stayHTML}
+            ${legHTML}
+        `;
+        list.appendChild(li);
 
-                <div class="modal-section">
-                    <h3>🚇 Trazado Ferroviario</h3>
-                    <p style="font-size:13px; font-style:italic; color:#a855f7;">Ruta adaptada para pasar por la línea ferroviaria de alta velocidad del Eurotúnel debajo del Canal de la Mancha.</p>
-                    <p style="margin-top: 8px; font-weight:700;">${pathStr}</p>
-                </div>
+        L.marker(city.coords, {
+            icon: L.divIcon({
+                className: 'custom-div-icon',
+                html: `<div class="marker-pin ${i === 0 ? 'origin-pin' : city.isReturnNode ? 'final-pin' : ''}">${i + 1}</div>`,
+                iconSize: [28,28], iconAnchor: [14,14]
+            })
+        }).addTo(markersLayer);
+    }
 
-                <div class="modal-section" style="border-left: 4px solid #10b981;">
-                    <h3>💳 Presupuesto y Pase Recomendado (2026)</h3>
-                    <p>• Abono Óptimo: <b>Interrail ${info.passName}</b></p>
-                    <p>• Precio Final Estimado Joven: <b>${info.totalJoven} €</b></p>
-                    <p>• Precio Final Estimado Adulto: <b>${info.totalAdulto} €</b></p>
-                </div>
-            `;
-            modal.classList.add('active');
-        }
+    calculateOptimalPass();
+    fitMapBounds();
+}
 
-        function closeSummaryModal() { document.getElementById('summary-modal').classList.remove('active'); }
-    </script>
+function fitMapBounds() {
+    if (mapBounds.length > 1) {
+        map.fitBounds(L.latLngBounds(mapBounds), { padding: isMobile() ? [20,20] : [60,60] });
+    } else if (mapBounds.length === 1) {
+        map.setView(mapBounds[0], 8);
+    }
+}
+
+// ─── PASS CALCULATION ─────────────────────────────────────────
+function calculateOptimalPass() {
+    const passEl   = document.getElementById('recommended-pass');
+    const passSubEl= document.getElementById('pass-subtext');
+    const priceEl  = document.getElementById('total-price');
+    const subEl    = document.getElementById('budget-subtext');
+
+    if (travelRoute.length === 0) { passEl.innerText = "—"; priceEl.innerText = "0 €"; return; }
+
+    const transitDays = Math.max(1, travelRoute.length - 1);
+    const totalStayDays = travelRoute.reduce((a,c) => a + c.stayDays, 0) + 1;
+    const reservations = window.currentTotalReservations || 0;
+
+    const options = [];
+    if (transitDays <= 4)  options.push({ name: "Flexi 4d / 1 mes",   joven:212, adulto:283, maxD:30 });
+    if (transitDays <= 5)  options.push({ name: "Flexi 5d / 1 mes",   joven:239, adulto:318, maxD:30 });
+    if (transitDays <= 7)  options.push({ name: "Flexi 7d / 1 mes",   joven:286, adulto:381, maxD:30 });
+    if (transitDays <= 10) options.push({ name: "Flexi 10d / 2 meses",joven:335, adulto:447, maxD:60 });
+    if (totalStayDays<=15) options.push({ name: "Continuous 15d",     joven:376, adulto:501, maxD:15 });
+    if (totalStayDays<=22) options.push({ name: "Continuous 22d",     joven:438, adulto:584, maxD:22 });
+
+    const valid = options.filter(o => o.maxD >= totalStayDays);
+    if (!valid.length) { passEl.innerText = "Consultar"; return; }
+    const opt = valid.reduce((a,b) => a.joven < b.joven ? a : b);
+
+    window.globalOptimalPassInfo = { passName: opt.name, totalStayDays, transitDays, reservations,
+        totalJoven: opt.joven + reservations, totalAdulto: opt.adulto + reservations };
+
+    passEl.innerHTML = `🎫 ${opt.name}`;
+    passSubEl.innerHTML = `${totalStayDays} días de viaje total`;
+    priceEl.innerHTML   = `${opt.joven + reservations}€ J / ${opt.adulto + reservations}€ A`;
+    subEl.innerHTML     = `Incluye reservas obligatorias`;
+}
+
+// ─── MODAL ────────────────────────────────────────────────────
+function openSummaryModal() {
+    if (travelRoute.length < 2) { alert("Añade más destinos para generar el informe."); return; }
+    const body = document.getElementById('modal-content-body');
+    const info = window.globalOptimalPassInfo;
+    const path = travelRoute.map(c => `${c.name} (${c.country})`).join(" → ");
+    body.innerHTML = `
+        <div class="modal-section">
+            <h3>🚂 Normativa Nacional (País: ${homeCountry})</h3>
+            <p>• Outbound Journey (Salida): <b>Activado</b></p>
+            <p>• Inbound Journey (Regreso): <b>${isLoopClosed ? "Activado" : "No solicitado (ruta lineal)"}</b></p>
+            <p style="margin-top:6px; color:var(--yellow)">• Alertas: <b>${window.nationalJourneysCount > 0 ? "⚠️ Tránsitos intermedios en país de residencia detectados" : "✅ Sin infracciones Interrail"}</b></p>
+        </div>
+        <div class="modal-section">
+            <h3>🗺️ Trazado Ferroviario</h3>
+            <p style="font-size:12px;color:var(--purple);margin-bottom:6px">Ruta vía Eurotúnel cuando aplica (Canal de la Mancha)</p>
+            <p style="font-weight:700;color:var(--text-hi);font-size:12px">${path}</p>
+        </div>
+        <div class="modal-section" style="border-left:3px solid var(--green)">
+            <h3>💳 Pase Recomendado y Presupuesto 2026</h3>
+            <p>• Abono: <b>Interrail ${info.passName}</b></p>
+            <p>• Precio Joven: <b>${info.totalJoven} €</b></p>
+            <p>• Precio Adulto: <b>${info.totalAdulto} €</b></p>
+        </div>
+    `;
+    document.getElementById('summary-modal').classList.add('active');
+}
+function closeSummaryModal() {
+    document.getElementById('summary-modal').classList.remove('active');
+}
+
+// Swipe down to close modal
+const modalOverlay = document.getElementById('summary-modal');
+let modalDragStart = 0;
+modalOverlay.querySelector('.modal-box').addEventListener('touchstart', e => {
+    modalDragStart = e.touches[0].clientY;
+}, { passive: true });
+modalOverlay.querySelector('.modal-box').addEventListener('touchend', e => {
+    if (e.changedTouches[0].clientY - modalDragStart > 60) closeSummaryModal();
+});
+modalOverlay.addEventListener('click', e => {
+    if (e.target === modalOverlay) closeSummaryModal();
+});
+</script>
 </body>
 </html>
