@@ -1,960 +1,459 @@
-```html
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interrail Planner 2026 - Conexión Canal de la Mancha</title>
-
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
     <style>
-        *{
-            box-sizing:border-box;
-            margin:0;
-            padding:0;
-            font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+        /* Estilos Globales Premium */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        body { display: flex; height: 100vh; background-color: #0f172a; color: #f8fafc; overflow: hidden; position: relative; }
+
+        #sidebar {
+            width: 450px; background: #1e293b; border-right: 1px solid #334155; display: flex; flex-direction: column; z-index: 1000; box-shadow: 8px 0 24px rgba(0, 0, 0, 0.35);
         }
 
-        body{
-            display:flex;
-            height:100vh;
-            background-color:#0f172a;
-            color:#f8fafc;
-            overflow:hidden;
-            position:relative;
-        }
+        .header { padding: 24px; background: #111827; border-bottom: 1px solid #334155; }
+        .header h1 { font-size: 22px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px; display: flex; align-items: center; gap: 8px; }
+        .header p { font-size: 13px; color: #94a3b8; margin-top: 6px; line-height: 1.4; }
 
-        #sidebar{
-            width:450px;
-            background:#1e293b;
-            border-right:1px solid #334155;
-            display:flex;
-            flex-direction:column;
-            z-index:1000;
-            box-shadow:8px 0 24px rgba(0,0,0,.35);
+        .search-container { position: relative; padding: 20px; background: #1e293b; border-bottom: 1px solid #334155; }
+        .search-box { position: relative; display: flex; align-items: center; }
+        .search-box input {
+            width: 100%; padding: 14px 16px 14px 42px; background: #0f172a; border: 1px solid #475569; border-radius: 10px; color: #ffffff; font-size: 15px; outline: none; transition: all 0.25s ease;
         }
+        .search-box input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25); background: #111827; }
+        .search-box::before { content: '🔍'; position: absolute; left: 14px; color: #94a3b8; font-size: 16px; pointer-events: none; }
+        
+        .suggestions-list {
+            position: absolute; top: 74px; left: 20px; right: 20px; background: #1e293b; border: 1px solid #475569; border-radius: 10px; max-height: 260px; overflow-y: auto; z-index: 2000; list-style: none; display: none; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5); padding: 6px 0;
+        }
+        .suggestions-list li { padding: 12px 18px; font-size: 14px; color: #e2e8f0; cursor: pointer; transition: all 0.15s ease; display: flex; justify-content: space-between; align-items: center; }
+        .suggestions-list li:hover { background: #3b82f6; color: #ffffff; padding-left: 22px; }
 
-        .header{
-            padding:24px;
-            background:#111827;
-            border-bottom:1px solid #334155;
-        }
+        /* Tarjetas de Información */
+        .cards-container { padding: 20px 20px 5px 20px; display: flex; flex-direction: column; gap: 12px; }
+        .premium-card { padding: 16px; border-radius: 14px; background: linear-gradient(135deg, #311042 0%, #1e1b4b 100%); border: 1px solid #581c87; }
+        .premium-card.budget { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); border-color: #1d4ed8; }
+        .premium-card h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px; color: #c084fc; margin-bottom: 4px; font-weight: 700; }
+        .premium-card.budget h3 { color: #60a5fa; }
+        .premium-card .value { font-size: 17px; font-weight: 800; color: #ffffff; }
+        .premium-card .subtext { font-size: 11.5px; color: #94a3b8; margin-top: 5px; line-height: 1.4; }
 
-        .header h1{
-            font-size:22px;
-            font-weight:800;
-            color:#fff;
-            letter-spacing:-.5px;
-            display:flex;
-            align-items:center;
-            gap:8px;
-        }
+        /* Contenedor de Destinos */
+        .destinations-container { flex: 1; padding: 20px; overflow-y: auto; }
+        .destinations-list { list-style: none; position: relative; }
+        .destinations-list::before { content: ''; position: absolute; left: 16px; top: 24px; bottom: 24px; width: 2px; background: #475569; z-index: 1; }
 
-        .header p{
-            font-size:13px;
-            color:#94a3b8;
-            margin-top:6px;
-            line-height:1.4;
-        }
+        .destination-item { background: #111827; padding: 16px; margin-bottom: 14px; border-radius: 12px; border: 1px solid #334155; position: relative; z-index: 2; }
+        .item-main { display: flex; align-items: center; justify-content: space-between; }
+        .destination-info { display: flex; align-items: center; gap: 14px; }
+        
+        .badge-number { background: #3b82f6; color: #ffffff; font-weight: 800; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; }
+        .badge-number.origin { background: #10b981; }
+        .badge-number.final-stop { background: #ef4444; }
+        .city-name { font-size: 15px; font-weight: 700; color: #f8fafc; }
+        
+        .stay-counter { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #cbd5e1; margin-top: 10px; margin-left: 40px; background: #1e293b; padding: 6px 12px; border-radius: 6px; width: fit-content; }
+        .stay-counter input { width: 50px; padding: 4px; background: #0f172a; border: 1px solid #475569; border-radius: 4px; color: white; text-align: center; font-weight: bold; }
+        .stay-counter.origin-label { background: #064e3b; color: #a7f3d0; font-weight: 600; }
+        .stay-counter.final-label { background: #7f1d1d; color: #fca5a5; font-weight: 600; }
 
-        .search-container{
-            position:relative;
-            padding:20px;
-            background:#1e293b;
-            border-bottom:1px solid #334155;
-        }
+        /* Alertas de Trayecto e Info de Trenes */
+        .train-leg-info { margin-top: 12px; margin-left: 40px; padding: 10px 14px; background: #1e293b; border-left: 3px solid #f97316; font-size: 12.5px; color: #cbd5e1; border-radius: 0 8px 8px 0; }
+        .train-leg-info.tunnel-leg { border-left-color: #a855f7; background: #2e1065; }
+        .train-leg-info.country-warning { border-left-color: #eab308; background: #451a03; color: #fef08a; font-size: 11.5px; margin-top: 6px; }
 
-        .search-box{
-            position:relative;
-            display:flex;
-            align-items:center;
-        }
+        .btn-delete { background: none; border: none; color: #64748b; cursor: pointer; font-size: 16px; }
+        .btn-delete:hover { color: #ef4444; }
 
-        .search-box input{
-            width:100%;
-            padding:14px 16px 14px 42px;
-            background:#0f172a;
-            border:1px solid #475569;
-            border-radius:10px;
-            color:#fff;
-            font-size:15px;
-            outline:none;
-            transition:all .25s ease;
-        }
+        /* Secciones de Botones Inferiores */
+        .action-container { padding: 14px 20px; background: #111827; border-top: 1px solid #334155; display: flex; flex-direction: column; gap: 10px; }
+        .btn-finish { width: 100%; padding: 14px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3); }
+        .btn-finish:hover { filter: brightness(1.1); }
+        .btn-return { width: 100%; padding: 10px; background: #334155; color: #e2e8f0; border: 1px dashed #475569; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .btn-return:hover { background: #475569; color: white; }
 
-        .search-box input:focus{
-            border-color:#3b82f6;
-            box-shadow:0 0 0 3px rgba(59,130,246,.25);
-            background:#111827;
-        }
+        #map { flex: 1; height: 100%; background: #0f172a; }
+        .marker-pin { background: #111827; color: #f59e0b; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; border: 2.5px solid #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.4); font-size: 13px; }
+        .marker-pin.origin-pin { color: #10b981; }
+        .marker-pin.final-pin { color: #ef4444; }
 
-        .search-box::before{
-            content:'🔍';
-            position:absolute;
-            left:14px;
-            color:#94a3b8;
-            font-size:16px;
-            pointer-events:none;
-        }
-
-        .suggestions-list{
-            position:absolute;
-            top:74px;
-            left:20px;
-            right:20px;
-            background:#1e293b;
-            border:1px solid #475569;
-            border-radius:10px;
-            max-height:260px;
-            overflow-y:auto;
-            z-index:2000;
-            list-style:none;
-            display:none;
-            box-shadow:0 12px 30px rgba(0,0,0,.5);
-            padding:6px 0;
-        }
-
-        .suggestions-list li{
-            padding:12px 18px;
-            font-size:14px;
-            color:#e2e8f0;
-            cursor:pointer;
-            transition:all .15s ease;
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-        }
-
-        .suggestions-list li:hover{
-            background:#3b82f6;
-            color:#fff;
-            padding-left:22px;
-        }
-
-        .cards-container{
-            padding:20px 20px 5px 20px;
-            display:flex;
-            flex-direction:column;
-            gap:12px;
-        }
-
-        .premium-card{
-            padding:16px;
-            border-radius:14px;
-            background:linear-gradient(135deg,#311042 0%,#1e1b4b 100%);
-            border:1px solid #581c87;
-        }
-
-        .premium-card.budget{
-            background:linear-gradient(135deg,#0f172a 0%,#1e3a8a 100%);
-            border-color:#1d4ed8;
-        }
-
-        .premium-card h3{
-            font-size:11px;
-            text-transform:uppercase;
-            letter-spacing:1.2px;
-            color:#c084fc;
-            margin-bottom:4px;
-            font-weight:700;
-        }
-
-        .premium-card.budget h3{
-            color:#60a5fa;
-        }
-
-        .premium-card .value{
-            font-size:17px;
-            font-weight:800;
-            color:#fff;
-        }
-
-        .premium-card .subtext{
-            font-size:11.5px;
-            color:#94a3b8;
-            margin-top:5px;
-            line-height:1.4;
-        }
-
-        .destinations-container{
-            flex:1;
-            padding:20px;
-            overflow-y:auto;
-        }
-
-        .destinations-list{
-            list-style:none;
-            position:relative;
-        }
-
-        .destinations-list::before{
-            content:'';
-            position:absolute;
-            left:16px;
-            top:24px;
-            bottom:24px;
-            width:2px;
-            background:#475569;
-            z-index:1;
-        }
-
-        .destination-item{
-            background:#111827;
-            padding:16px;
-            margin-bottom:14px;
-            border-radius:12px;
-            border:1px solid #334155;
-            position:relative;
-            z-index:2;
-        }
-
-        .item-main{
-            display:flex;
-            align-items:center;
-            justify-content:space-between;
-        }
-
-        .destination-info{
-            display:flex;
-            align-items:center;
-            gap:14px;
-        }
-
-        .badge-number{
-            background:#3b82f6;
-            color:#fff;
-            font-weight:800;
-            width:26px;
-            height:26px;
-            border-radius:50%;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            font-size:13px;
-        }
-
-        .badge-number.origin{
-            background:#10b981;
-        }
-
-        .badge-number.final-stop{
-            background:#ef4444;
-        }
-
-        .city-name{
-            font-size:15px;
-            font-weight:700;
-            color:#f8fafc;
-        }
-
-        .stay-counter{
-            display:flex;
-            align-items:center;
-            gap:8px;
-            font-size:13px;
-            color:#cbd5e1;
-            margin-top:10px;
-            margin-left:40px;
-            background:#1e293b;
-            padding:6px 12px;
-            border-radius:6px;
-            width:fit-content;
-        }
-
-        .stay-counter input{
-            width:50px;
-            padding:4px;
-            background:#0f172a;
-            border:1px solid #475569;
-            border-radius:4px;
-            color:white;
-            text-align:center;
-            font-weight:bold;
-        }
-
-        .stay-counter.origin-label{
-            background:#064e3b;
-            color:#a7f3d0;
-            font-weight:600;
-        }
-
-        .stay-counter.final-label{
-            background:#7f1d1d;
-            color:#fca5a5;
-            font-weight:600;
-        }
-
-        .train-leg-info{
-            margin-top:12px;
-            margin-left:40px;
-            padding:10px 14px;
-            background:#1e293b;
-            border-left:3px solid #f97316;
-            font-size:12.5px;
-            color:#cbd5e1;
-            border-radius:0 8px 8px 0;
-        }
-
-        .train-leg-info.tunnel-leg{
-            border-left-color:#a855f7;
-            background:#2e1065;
-        }
-
-        .train-leg-info.country-warning{
-            border-left-color:#eab308;
-            background:#451a03;
-            color:#fef08a;
-            font-size:11.5px;
-            margin-top:6px;
-        }
-
-        .btn-delete{
-            background:none;
-            border:none;
-            color:#64748b;
-            cursor:pointer;
-            font-size:16px;
-        }
-
-        .btn-delete:hover{
-            color:#ef4444;
-        }
-
-        .action-container{
-            padding:14px 20px;
-            background:#111827;
-            border-top:1px solid #334155;
-            display:flex;
-            flex-direction:column;
-            gap:10px;
-        }
-
-        .btn-finish{
-            width:100%;
-            padding:14px;
-            background:linear-gradient(135deg,#10b981 0%,#059669 100%);
-            color:white;
-            border:none;
-            border-radius:10px;
-            font-size:15px;
-            font-weight:700;
-            cursor:pointer;
-            box-shadow:0 4px 14px rgba(16,185,129,.3);
-        }
-
-        .btn-finish:hover{
-            filter:brightness(1.1);
-        }
-
-        .btn-return{
-            width:100%;
-            padding:10px;
-            background:#334155;
-            color:#e2e8f0;
-            border:1px dashed #475569;
-            border-radius:8px;
-            font-size:13px;
-            font-weight:600;
-            cursor:pointer;
-            transition:all .2s;
-        }
-
-        .btn-return:hover{
-            background:#475569;
-            color:white;
-        }
-
-        #map{
-            flex:1;
-            height:100%;
-            background:#0f172a;
-        }
-
-        .marker-pin{
-            background:#111827;
-            color:#f59e0b;
-            width:28px;
-            height:28px;
-            border-radius:50%;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            font-weight:800;
-            border:2.5px solid #fff;
-            box-shadow:0 4px 12px rgba(0,0,0,.4);
-            font-size:13px;
-        }
-
-        .marker-pin.origin-pin{
-            color:#10b981;
-        }
-
-        .marker-pin.final-pin{
-            color:#ef4444;
-        }
-
-        .modal-overlay{
-            position:fixed;
-            top:0;
-            left:0;
-            right:0;
-            bottom:0;
-            background:rgba(15,23,42,.75);
-            backdrop-filter:blur(8px);
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            z-index:3000;
-            opacity:0;
-            pointer-events:none;
-            transition:opacity .3s ease;
-        }
-
-        .modal-overlay.active{
-            opacity:1;
-            pointer-events:auto;
-        }
-
-        .modal-box{
-            background:#1e293b;
-            width:90%;
-            max-width:650px;
-            border-radius:16px;
-            border:1px solid #475569;
-            box-shadow:0 20px 50px rgba(0,0,0,.6);
-            padding:28px;
-            display:flex;
-            flex-direction:column;
-            gap:20px;
-            max-height:90vh;
-        }
-
-        .modal-box h2{
-            font-size:24px;
-            font-weight:800;
-            color:white;
-            border-bottom:1px solid #334155;
-            padding-bottom:12px;
-        }
-
-        .modal-body{
-            overflow-y:auto;
-            display:flex;
-            flex-direction:column;
-            gap:16px;
-            font-size:14px;
-            color:#cbd5e1;
-            line-height:1.5;
-        }
-
-        .modal-section{
-            background:#111827;
-            padding:16px;
-            border-radius:10px;
-            border:1px solid #334155;
-        }
-
-        .modal-section h3{
-            font-size:13px;
-            color:#3b82f6;
-            text-transform:uppercase;
-            margin-bottom:6px;
-        }
-
-        .btn-close-modal{
-            padding:12px;
-            background:#334155;
-            color:white;
-            border:none;
-            border-radius:8px;
-            font-size:14px;
-            font-weight:600;
-            cursor:pointer;
-            text-align:center;
-        }
-
-        #summary-map{
-            height:300px;
-            border-radius:12px;
-            overflow:hidden;
-            margin-top:10px;
-        }
+        /* Modal Flotante */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 3000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        .modal-box { background: #1e293b; width: 90%; max-width: 600px; border-radius: 16px; border: 1px solid #475569; box-shadow: 0 20px 50px rgba(0,0,0,0.6); padding: 28px; display: flex; flex-direction: column; gap: 20px; max-height: 85vh; }
+        .modal-box h2 { font-size: 24px; font-weight: 800; color: white; border-bottom: 1px solid #334155; padding-bottom: 12px; }
+        .modal-body { overflow-y: auto; display: flex; flex-direction: column; gap: 16px; font-size: 14px; color: #cbd5e1; line-height: 1.5; }
+        .modal-section { background: #111827; padding: 16px; border-radius: 10px; border: 1px solid #334155; }
+        .modal-section h3 { font-size: 13px; color: #3b82f6; text-transform: uppercase; margin-bottom: 6px; }
+        .btn-close-modal { padding: 12px; background: #334155; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; text-align: center; }
     </style>
 </head>
-
 <body>
 
-<div id="sidebar">
-
-    <div class="header">
-        <h1>🇪🇺 Interrail Planner 2026</h1>
-        <p>
-            Control de enrutamiento ferroviario por el Eurotúnel y validación
-            de trayectos nacionales en tu país de origen.
-        </p>
-    </div>
-
-    <div class="search-container">
-        <div class="search-box">
-            <input
-                type="text"
-                id="city-input"
-                placeholder="Añade origen de salida..."
-                autocomplete="off"
-            />
+    <div id="sidebar">
+        <div class="header">
+            <h1>🇪🇺 Interrail Planner 2026</h1>
+            <p>Control de enrutamiento ferroviario por el Eurotúnel y validación de trayectos nacionales en tu país de origen.</p>
         </div>
 
-        <ul id="suggestions" class="suggestions-list"></ul>
-    </div>
+        <div class="search-container">
+            <div class="search-box">
+                <input type="text" id="city-input" placeholder="Añade origen de salida (Ej: Madrid, Barcelona)..." autocomplete="off">
+            </div>
+            <ul id="suggestions" class="suggestions-list"></ul>
+        </div>
 
-    <div class="cards-container">
+        <div class="cards-container">
+            <div class="premium-card">
+                <h3>Pase Oficial Recomendado</h3>
+                <div class="value" id="recommended-pass">-</div>
+                <div class="subtext" id="pass-subtext">Optimizado según días de tránsito internacional activo.</div>
+            </div>
 
-        <div class="premium-card">
-            <h3>Pase Oficial Recomendado</h3>
-            <div class="value" id="recommended-pass">-</div>
-            <div class="subtext" id="pass-subtext">
-                Optimizado según días de tránsito internacional activo.
+            <div class="premium-card budget">
+                <h3>Presupuesto Estimado (Transporte)</h3>
+                <div class="value" id="total-price">0 €</div>
+                <div class="subtext" id="budget-subtext">Precios base e histórico de reservas de asientos incluidos.</div>
             </div>
         </div>
 
-        <div class="premium-card budget">
-            <h3>Presupuesto Estimado</h3>
-            <div class="value" id="total-price">0 €</div>
-            <div class="subtext" id="budget-subtext">
-                Incluye reservas aproximadas.
-            </div>
+        <div class="destinations-container">
+            <button class="btn-return" id="btn-trigger-return" onclick="addFinalReturnStop()" style="display: none; margin-bottom: 12px;">🔄 Añadir Última Parada (Volver al Origen)</button>
+            <ul class="destinations-list" id="route-list"></ul>
         </div>
 
+        <div class="action-container">
+            <button class="btn-finish" onclick="openSummaryModal()">💾 Finalizar Viaje</button>
+        </div>
     </div>
 
-    <div class="destinations-container">
+    <div id="map"></div>
 
-        <button
-            class="btn-return"
-            id="btn-trigger-return"
-            onclick="addFinalReturnStop()"
-            style="display:none;margin-bottom:12px;"
-        >
-            🔄 Añadir Última Parada
-        </button>
-
-        <ul class="destinations-list" id="route-list"></ul>
-
+    <div id="summary-modal" class="modal-overlay">
+        <div class="modal-box">
+            <h2>🗺️ Resumen Ejecutivo de tu Ruta</h2>
+            <div class="modal-body" id="modal-content-body"></div>
+            <button class="btn-close-modal" onclick="closeSummaryModal()">Volver al Editor</button>
+        </div>
     </div>
 
-    <div class="action-container">
-        <button class="btn-finish" onclick="openSummaryModal()">
-            💾 Finalizar Viaje
-        </button>
-    </div>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-</div>
+    <script>
+        let travelRoute = [];
+        let debounceTimer;
+        window.globalOptimalPassInfo = null;
+        let homeCountry = ""; 
+        let isLoopClosed = false;
 
-<div id="map"></div>
+        const map = L.map('map', { zoomControl: false }).setView([47.5, 10.0], 5);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { attribution: '© OpenStreetMap' }).addTo(map);
 
-<div id="summary-modal" class="modal-overlay">
+        let markersLayer = L.layerGroup().addTo(map);
+        let linesLayer = L.layerGroup().addTo(map);
 
-    <div class="modal-box">
+        const cityInput = document.getElementById('city-input');
+        const suggestionsLog = document.getElementById('suggestions');
 
-        <h2>🗺️ Resumen Ejecutivo de tu Ruta</h2>
+        cityInput.addEventListener('input', () => {
+            clearTimeout(debounceTimer);
+            const query = cityInput.value.trim();
+            if (query.length < 3) { suggestionsLog.style.display = 'none'; return; }
+            debounceTimer = setTimeout(() => { fetchSuggestions(query); }, 250);
+        });
 
-        <div class="modal-body" id="modal-content-body"></div>
+        async function fetchSuggestions(query) {
+            const countriesEurope = "es,fr,de,it,nl,be,lu,ch,at,gb,ie,dk,no,se,fi,pl,cz,sk,hu,ro,bg,gr,hr,si,ee,lv,lt,pt";
+            const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(query)}&countrycodes=${countriesEurope}&limit=10`;
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                suggestionsLog.innerHTML = "";
+                if (data && data.length > 0) {
+                    data.forEach(place => {
+                        const nameParts = place.display_name.split(',');
+                        const cityName = nameParts[0];
+                        const countryName = nameParts[nameParts.length - 1].trim();
+                        const countryCode = place.address.country_code ? place.address.country_code.toUpperCase() : "";
 
-        <button class="btn-close-modal" onclick="closeSummaryModal()">
-            Volver al Editor
-        </button>
+                        const li = document.createElement('li');
+                        li.innerText = `${cityName} (${countryName})`;
+                        li.onclick = () => addPlace(cityName, parseFloat(place.lat), parseFloat(place.lon), countryCode);
+                        suggestionsLog.appendChild(li);
+                    });
+                    suggestionsLog.style.display = 'block';
+                }
+            } catch (e) { console.error(e); }
+        }
 
-    </div>
+        function addPlace(name, lat, lon, countryCode) {
+            if (isLoopClosed) {
+                alert("Has cerrado tu ruta con una Última Parada. Elimina la vuelta a casa si quieres meter más destinos.");
+                return;
+            }
+            if (travelRoute.length === 0) {
+                homeCountry = countryCode; 
+            }
+            if (travelRoute.some(c => c.name === name)) {
+                alert("Esta ciudad ya está en tu itinerario.");
+                return;
+            }
+            let isFirst = travelRoute.length === 0;
+            travelRoute.push({ name, coords: [lat, lon], country: countryCode, stayDays: isFirst ? 0 : 2, isReturnNode: false });
+            cityInput.value = "";
+            suggestionsLog.style.display = 'none';
+            document.getElementById('btn-trigger-return').style.display = 'block';
+            updateUI();
+        }
 
-</div>
+        function addFinalReturnStop() {
+            if (travelRoute.length < 2) {
+                alert("Añade al menos un destino internacional antes de programar el regreso.");
+                return;
+            }
+            if (isLoopClosed) return;
+            
+            let originNode = travelRoute[0];
+            travelRoute.push({
+                name: originNode.name,
+                coords: originNode.coords,
+                country: originNode.country,
+                stayDays: 0,
+                isReturnNode: true
+            });
+            isLoopClosed = true;
+            document.getElementById('btn-trigger-return').style.display = 'none';
+            updateUI();
+        }
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        function updateStayDays(index, value) {
+            let days = parseInt(value);
+            if (isNaN(days) || days < 1) days = 1;
+            travelRoute[index].stayDays = days;
+            calculateOptimalPass();
+        }
 
-<script>
+        function removeDestination(index) {
+            if (travelRoute[index].isReturnNode) {
+                isLoopClosed = false;
+                document.getElementById('btn-trigger-return').style.display = 'block';
+            }
+            travelRoute.splice(index, 1);
+            if (travelRoute.length === 0) {
+                homeCountry = "";
+                isLoopClosed = false;
+                document.getElementById('btn-trigger-return').style.display = 'none';
+            } else {
+                travelRoute[0].stayDays = 0;
+            }
+            updateUI();
+        }
 
-let travelRoute = [];
-let debounceTimer;
-let homeCountry = "";
-let isLoopClosed = false;
+        // FUERZA EL TRAZADO POR EL EUROTÚNEL / CALAIS SI VA DE FRANCIA A REINO UNIDO
+        async function drawChannelTunnelRoute(coord1, coord2) {
+            const calaisCoords = [50.9400, 1.8155]; // Coordenadas de la entrada del Eurotúnel
+            let url = `https://router.project-osrm.org/route/v1/driving/${coord1[1]},${coord1[0]};${calaisCoords[1]},${calaisCoords[0]};${coord2[1]},${coord2[0]}?overview=full&geometries=geojson`;
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                if (data.routes && data.routes.length > 0) {
+                    const coordinates = data.routes[0].geometry.coordinates;
+                    L.polyline(coordinates.map(c => [c[1], c[0]]), {
+                        color: '#a855f7', weight: 5, opacity: 0.95
+                    }).addTo(linesLayer);
+                    return Math.round(data.routes[0].distance / 1000);
+                }
+            } catch (e) { console.error(e); }
+            return 450;
+        }
 
-const map = L.map('map', {
-    zoomControl:false
-}).setView([47.5,10.0],5);
+        async function drawStandardRoute(coord1, coord2) {
+            let url = `https://router.project-osrm.org/route/v1/driving/${coord1[1]},${coord1[0]};${coord2[1]},${coord2[0]}?overview=full&geometries=geojson`;
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                if (data.routes && data.routes.length > 0) {
+                    const coordinates = data.routes[0].geometry.coordinates;
+                    L.polyline(coordinates.map(c => [c[1], c[0]]), {
+                        color: '#f97316', weight: 4, opacity: 0.85
+                    }).addTo(linesLayer);
+                    return Math.round(data.routes[0].distance / 1000);
+                }
+            } catch (e) {}
+            return 300;
+        }
 
-L.tileLayer(
-    'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-    {
-        attribution:'© OpenStreetMap'
-    }
-).addTo(map);
+        async function updateUI() {
+            const listContainer = document.getElementById('route-list');
+            listContainer.innerHTML = "";
+            markersLayer.clearLayers();
+            linesLayer.clearLayers();
 
-let markersLayer = L.layerGroup().addTo(map);
-let linesLayer = L.layerGroup().addTo(map);
+            let bounds = [];
+            window.currentTotalReservations = 0;
+            window.nationalJourneysCount = 0;
 
-const cityInput = document.getElementById('city-input');
-const suggestionsLog = document.getElementById('suggestions');
+            for (let index = 0; index < travelRoute.length; index++) {
+                const city = travelRoute[index];
+                bounds.push(city.coords);
+                let legHTML = '';
+                let stayHTML = '';
+                let warningHTML = '';
 
-cityInput.addEventListener('input', () => {
+                // Validación de Normas Interrail sobre el País de Residencia
+                if (index > 0 && city.country === homeCountry && !city.isReturnNode) {
+                    window.nationalJourneysCount++;
+                    warningHTML = `<div class="train-leg-info country-warning">⚠️ Tránsito en tu país de residencia (${city.country}). Recuerda que Interrail limita esto a un máximo de 2 trayectos totales (Salida/Regreso).</div>`;
+                }
 
-    clearTimeout(debounceTimer);
+                if (index === 0) {
+                    stayHTML = `<div class="stay-counter origin-label">🟢 Estación de Origen (${city.country})</div>`;
+                } else if (city.isReturnNode) {
+                    stayHTML = `<div class="stay-counter final-label">🔴 Última Parada: Regreso a Casa</div>`;
+                    const prevCity = travelRoute[index - 1];
+                    const distanceKm = await drawStandardRoute(prevCity.coords, city.coords);
+                    legHTML = `
+                        <div class="train-leg-info">
+                            <span><b>🏠 Viaje de Regreso Nacional (Inbound Journey)</b></span>
+                            <span style="color: #94a3b8;">Distancia de vuelta: ~${distanceKm} km. Cubierto por la norma especial de Interrail.</span>
+                        </div>`;
+                } else {
+                    const prevCity = travelRoute[index - 1];
+                    let distanceKm;
+                    let isTunnel = false;
 
-    const query = cityInput.value.trim();
+                    // Detectar si cruzamos el canal entre Francia/Bélgica y UK
+                    if ((prevCity.country === "GB" && (city.country === "FR" || city.country === "BE")) || 
+                        (city.country === "GB" && (prevCity.country === "FR" || prevCity.country === "BE"))) {
+                        isTunnel = true;
+                        distanceKm = await drawChannelTunnelRoute(prevCity.coords, city.coords);
+                    } else {
+                        distanceKm = await drawStandardRoute(prevCity.coords, city.coords);
+                    }
+                    
+                    let legCost = isTunnel ? 35 : 12; // Suplemento Eurostar fijado en 35€ por reserva obligatorio
+                    let typeText = isTunnel ? "🚄 Eurostar de Alta Velocidad (Vía Eurotúnel Canal de la Mancha)" : "🛤️ Red Ferroviaria Internacional";
+                    window.currentTotalReservations += legCost;
+                    
+                    legHTML = `
+                        <div class="train-leg-info ${isTunnel ? 'tunnel-leg' : ''}">
+                            <span><b>${typeText}</b></span>
+                            <span style="color: #cbd5e1;">Distancia: ~${distanceKm} km | Reserva: +${legCost}€</span>
+                        </div>` + warningHTML;
 
-    if(query.length < 3){
-        suggestionsLog.style.display = 'none';
-        return;
-    }
-
-    debounceTimer = setTimeout(() => {
-        fetchSuggestions(query);
-    },250);
-
-});
-
-async function fetchSuggestions(query){
-
-    const countriesEurope =
-        "es,fr,de,it,nl,be,lu,ch,at,gb,ie,dk,no,se,fi,pl,cz,sk,hu,ro,bg,gr,hr,si,ee,lv,lt,pt";
-
-    const url =
-        `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(query)}&countrycodes=${countriesEurope}&limit=10`;
-
-    try{
-
-        const response = await fetch(url);
-        const data = await response.json();
-
-        suggestionsLog.innerHTML = "";
-
-        if(data && data.length > 0){
-
-            data.forEach(place => {
-
-                const nameParts = place.display_name.split(',');
-                const cityName = nameParts[0];
-                const countryName = nameParts[nameParts.length - 1].trim();
-
-                const countryCode =
-                    place.address.country_code
-                    ? place.address.country_code.toUpperCase()
-                    : "";
+                    stayHTML = `
+                        <div class="stay-counter">
+                            <span>Estancia:</span>
+                            <input type="number" min="1" value="${city.stayDays}" onchange="updateStayDays(${index}, this.value)">
+                            <span>días</span>
+                        </div>`;
+                }
 
                 const li = document.createElement('li');
+                li.className = 'destination-item';
+                li.innerHTML = `
+                    <div class="item-main">
+                        <div class="destination-info">
+                            <span class="badge-number ${index === 0 ? 'origin' : (city.isReturnNode ? 'final-stop' : '')}">${index + 1}</span>
+                            <span class="city-name">${city.name}</span>
+                        </div>
+                        <button class="btn-delete" onclick="removeDestination(${index})">✕</button>
+                    </div>
+                    ${stayHTML}
+                    ${legHTML}
+                `;
+                listContainer.appendChild(li);
 
-                li.innerText = `${cityName} (${countryName})`;
+                L.marker(city.coords, {
+                    icon: L.divIcon({
+                        className: 'custom-div-icon',
+                        html: `<div class="marker-pin ${index === 0 ? 'origin-pin' : (city.isReturnNode ? 'final-pin' : '')}">${index + 1}</div>`,
+                        iconSize: [28, 28], iconAnchor: [14, 14]
+                    })
+                }).addTo(markersLayer);
+            }
 
-                li.onclick = () =>
-                    addPlace(
-                        cityName,
-                        parseFloat(place.lat),
-                        parseFloat(place.lon),
-                        countryCode
-                    );
-
-                suggestionsLog.appendChild(li);
-
-            });
-
-            suggestionsLog.style.display = 'block';
+            calculateOptimalPass();
+            if (bounds.length > 1) { map.fitBounds(L.latLngBounds(bounds), { padding: [60, 60] }); }
         }
 
-    }catch(e){
-        console.error(e);
-    }
-}
+        function calculateOptimalPass() {
+            const passEl = document.getElementById('recommended-pass');
+            const passSubEl = document.getElementById('pass-subtext');
+            const priceEl = document.getElementById('total-price');
+            const subtextEl = document.getElementById('budget-subtext');
 
-function addPlace(name,lat,lon,countryCode){
+            if (travelRoute.length === 0) {
+                passEl.innerText = "-"; priceEl.innerText = "0 €"; return;
+            }
 
-    if(isLoopClosed){
-        alert("Has cerrado tu ruta.");
-        return;
-    }
+            let transitDays = Math.max(1, travelRoute.length - 1);
+            let totalStayDays = travelRoute.reduce((acc, c) => acc + c.stayDays, 0) + 1;
+            let totalReservations = window.currentTotalReservations || 0;
 
-    if(travelRoute.length === 0){
-        homeCountry = countryCode;
-    }
+            let options = [];
+            // TARIFAS ACTUALIZADAS INTERRAIL INTERNACIONAL 2026
+            if (transitDays <= 4)  options.push({ name: "Flexi Pass: 4 días en 1 mes", type: "Flexi", joven: 212, adulto: 283, maxDuration: 30 });
+            if (transitDays <= 5)  options.push({ name: "Flexi Pass: 5 días en 1 mes", type: "Flexi", joven: 239, adulto: 318, maxDuration: 30 });
+            if (transitDays <= 7)  options.push({ name: "Flexi Pass: 7 días en 1 mes", type: "Flexi", joven: 286, adulto: 381, maxDuration: 30 });
+            if (transitDays <= 10) options.push({ name: "Flexi Pass: 10 días en 2 meses", type: "Flexi", joven: 335, adulto: 447, maxDuration: 60 });
 
-    if(travelRoute.some(c => c.name === name)){
-        alert("Esta ciudad ya está añadida.");
-        return;
-    }
+            if (totalStayDays <= 15) options.push({ name: "Continuous Pass: 15 días seguidos", type: "Continuous", joven: 376, adulto: 501, maxDuration: 15 });
+            if (totalStayDays <= 22) options.push({ name: "Continuous Pass: 22 días seguidos", type: "Continuous", joven: 438, adulto: 584, maxDuration: 22 });
 
-    let isFirst = travelRoute.length === 0;
+            let validOptions = options.filter(opt => opt.maxDuration >= totalStayDays || opt.type === "Flexi");
+            let optimal = validOptions.reduce((prev, curr) => (prev.joven < curr.joven) ? prev : curr);
 
-    travelRoute.push({
-        name,
-        coords:[lat,lon],
-        country:countryCode,
-        stayDays:isFirst ? 0 : 2,
-        isReturnNode:false
-    });
+            window.globalOptimalPassInfo = {
+                passName: optimal.name, totalStayDays, transitDays, totalReservations,
+                totalJoven: optimal.joven + totalReservations, totalAdulto: optimal.adulto + totalReservations
+            };
 
-    cityInput.value = "";
-    suggestionsLog.style.display = 'none';
-
-    document.getElementById('btn-trigger-return').style.display = 'block';
-
-    updateUI();
-}
-
-function addFinalReturnStop(){
-
-    if(travelRoute.length < 2){
-        alert("Añade más destinos.");
-        return;
-    }
-
-    if(isLoopClosed) return;
-
-    let originNode = travelRoute[0];
-
-    travelRoute.push({
-        name:originNode.name,
-        coords:originNode.coords,
-        country:originNode.country,
-        stayDays:0,
-        isReturnNode:true
-    });
-
-    isLoopClosed = true;
-
-    document.getElementById('btn-trigger-return').style.display = 'none';
-
-    updateUI();
-}
-
-function removeDestination(index){
-
-    if(travelRoute[index].isReturnNode){
-        isLoopClosed = false;
-        document.getElementById('btn-trigger-return').style.display = 'block';
-    }
-
-    travelRoute.splice(index,1);
-
-    if(travelRoute.length === 0){
-        homeCountry = "";
-        isLoopClosed = false;
-        document.getElementById('btn-trigger-return').style.display = 'none';
-    }
-
-    updateUI();
-}
-
-async function drawStandardRoute(coord1,coord2){
-
-    let url =
-        `https://router.project-osrm.org/route/v1/driving/${coord1[1]},${coord1[0]};${coord2[1]},${coord2[0]}?overview=full&geometries=geojson`;
-
-    try{
-
-        const response = await fetch(url);
-        const data = await response.json();
-
-        if(data.routes && data.routes.length > 0){
-
-            const coordinates = data.routes[0].geometry.coordinates;
-
-            L.polyline(
-                coordinates.map(c => [c[1],c[0]]),
-                {
-                    color:'#f97316',
-                    weight:4,
-                    opacity:.85
-                }
-            ).addTo(linesLayer);
-
+            passEl.innerHTML = `🎫 ${optimal.name}`;
+            passSubEl.innerHTML = `Ruta calculada de <b>${totalStayDays} días de viaje</b> globales.`;
+            priceEl.innerHTML = `${optimal.joven + totalReservations} € (Joven) / ${optimal.adulto + totalReservations} € (Adulto)`;
+            subtextEl.innerHTML = `Incluye reservas del Eurostar por el Canal de la Mancha y tramos europeos obligatorios.`;
         }
 
-    }catch(e){}
-}
+        function openSummaryModal() {
+            if (travelRoute.length < 2) { alert("Añade más destinos para generar el informe."); return; }
+            const modal = document.getElementById('summary-modal');
+            const body = document.getElementById('modal-content-body');
+            const info = window.globalOptimalPassInfo;
 
-async function updateUI(){
+            let pathStr = travelRoute.map(c => `${c.name} (${c.country})`).join(" ➔ ");
 
-    const listContainer = document.getElementById('route-list');
-
-    listContainer.innerHTML = "";
-
-    markersLayer.clearLayers();
-    linesLayer.clearLayers();
-
-    let bounds = [];
-
-    for(let index = 0; index < travelRoute.length; index++){
-
-        const city = travelRoute[index];
-
-        bounds.push(city.coords);
-
-        let legHTML = '';
-        let stayHTML = '';
-
-        if(index === 0){
-
-            stayHTML =
-                `<div class="stay-counter origin-label">
-                    🟢 Estación de Origen
-                </div>`;
-
-        }else if(city.isReturnNode){
-
-            stayHTML =
-                `<div class="stay-counter final-label">
-                    🔴 Regreso Final
-                </div>`;
-
-            const prevCity = travelRoute[index - 1];
-
-            await drawStandardRoute(prevCity.coords,city.coords);
-
-        }else{
-
-            const prevCity = travelRoute[index - 1];
-
-            await drawStandardRoute(prevCity.coords,city.coords);
-
-            legHTML =
-                `<div class="train-leg-info">
-                    🚄 Trayecto Internacional
-                </div>`;
-
-            stayHTML =
-                `<div class="stay-counter">
-                    <span>Estancia:</span>
-                    <input type="number" min="1" value="${city.stayDays}">
-                    <span>días</span>
-                </div>`;
-        }
-
-        const li = document.createElement('li');
-
-        li.className = 'destination-item';
-
-        li.innerHTML = `
-            <div class="item-main">
-                <div class="destination-info">
-                    <span class="badge-number ${index === 0 ? 'origin' : (city.isReturnNode ? 'final-stop' : '')}">
-                        ${index + 1}
-                    </span>
-
-                    <span class="city-name">${city.name}</span>
+            body.innerHTML = `
+                <div class="modal-section">
+                    <h3>🚂 Análisis de Normativa Nacional (País: ${homeCountry})</h3>
+                    <p>• Trayecto inicial saliendo de tu país (Outbound Journey): <b>Activado e Incluido</b>.</p>
+                    <p>• Trayecto final volviendo a tu país (Inbound Journey): <b>${isLoopClosed ? "Activado e Incluido con éxito" : "No solicitado (Ruta lineal)"}</b>.</p>
+                    <p style="margin-top: 6px; color:#eab308;">• Alertas de infracción en red local: <b>${window.nationalJourneysCount > 0 ? "¡Ojo! Has metido tránsitos intermedios en tu país. Podrías necesitar billetes locales extra." : "Ninguna. Cumples las bases de Interrail."}</b></p>
                 </div>
 
-                <button class="btn-delete" onclick="removeDestination(${index})">
-                    ✕
-                </button>
-            </div>
+                <div class="modal-section">
+                    <h3>🚇 Trazado Ferroviario</h3>
+                    <p style="font-size:13px; font-style:italic; color:#a855f7;">Ruta adaptada para pasar por la línea ferroviaria de alta velocidad del Eurotúnel debajo del Canal de la Mancha.</p>
+                    <p style="margin-top: 8px; font-weight:700;">${pathStr}</p>
+                </div>
 
-            ${stayHTML}
-            ${legHTML}
-        `;
-
-        listContainer.appendChild(li);
-
-        L.marker(city.coords,{
-            icon:L.divIcon({
-                className:'custom-div-icon',
-                html:`
-                    <div class="marker-pin ${index === 0 ? 'origin-pin' : (city.isReturnNode ? 'final-pin' : '')}">
-                        ${index + 1}
-                    </div>
-                `,
-                iconSize:[28,28],
-                iconAnchor:[14,14]
-            })
-        }).addTo(markersLayer);
-
-    }
-
-    if(bounds.length > 1){
-        map.fitBounds(
-            L.latLngBounds(bounds),
-            {
-                padding:[60,60]
-            }
-        );
-    }
-}
-
-function openSummaryModal(){
-
-    if(travelRoute.length < 2){
-        alert("Añade más destinos.");
-        return;
-    }
-
-    const modal = document.getElementById('summary-modal');
-    const body = document.getElementById('modal-content-body');
-
-    let pathStr =
-        travelRoute.map(c => `${c.name} (${c.country})`).join(" ➔ ");
-
-    body.innerHTML = `
-
-        <div class="modal-section">
-            <h3>🚇 Trazado Ferroviario</h3>
-
-            <p style="margin-top:8px;font-weight:700;">
-                ${pathStr}
-            </p>
-        </div>
-
-        <div class="modal-section">
-            <h3>🗺️ Vista Final de la Ruta</h3>
-
-            <div id="summary-map"></div>
-        </div>
-    `;
-
-    modal.classList.add('active');
-
-    setTimeout(() => {
-
-        if(window.summaryMapInstance){
-            window.summaryMapInstance.remove();
+                <div class="modal-section" style="border-left: 4px solid #10b981;">
+                    <h3>💳 Presupuesto y Pase Recomendado (2026)</h3>
+                    <p>• Abono Óptimo: <b>Interrail ${info.passName}</b></p>
+                    <p>• Precio Final Estimado Joven: <b>${info.totalJoven} €</b></p>
+                    <p>• Precio Final Estimado Adulto: <b>${info.totalAdulto} €</b></p>
+                </div>
+            `;
+            modal.classList.add('active');
         }
 
-        const summaryMap = L.map('summary-map',{
-            zoomControl:false,
-            attributionControl:false
-        });
-
-        window.summaryMapInstance = summaryMap;
-
-        L.tileLayer(
-            'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
-        ).addTo(summaryMap);
-
-        const routeCoords = travelRoute.map(c => c.coords);
-
-        L.polyline(routeCoords,{
-            color:'#3b82f6',
-            weight:4,
-            opacity:.9
-        }).addTo(summaryMap);
-
-        travelRoute.forEach((city,index) => {
-
-            L.marker(city.coords)
-                .addTo(summaryMap)
-                .bindPopup(`<b>${index + 1}. ${city.name}</b>`);
-
-        });
-
-        summaryMap.fitBounds(routeCoords,{
-            padding:[30,30]
-        });
-
-    },150);
-}
-
-function closeSummaryModal(){
-    document.getElementById('summary-modal').classList.remove('active');
-}
-
-</script>
-
+        function closeSummaryModal() { document.getElementById('summary-modal').classList.remove('active'); }
+    </script>
 </body>
 </html>
-```
