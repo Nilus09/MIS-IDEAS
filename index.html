@@ -1,1063 +1,960 @@
+```html
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Mis Ideas</title>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    :root {
-      --bg: #f5f2ee; --bg2: #ede9e3; --black: #1a1a18; --dark: #2e2e2c;
-      --red: #8b1c1c; --mid: #6b6b68; --border: #ccc8c0;
-    }
-    body {
-      background: var(--bg); color: var(--black); font-family: 'Lato', sans-serif;
-      font-weight: 300; min-height: 100vh;
-    }
-    body::before { content:''; display:block; height:3px; background:var(--red); position:fixed; top:0;left:0;right:0; z-index:999; }
-    
-    header {
-      background:var(--black); padding:38px 40px 34px; display:flex; align-items:center;
-      justify-content:space-between; flex-wrap:wrap; gap:16px; margin-top:3px; position:relative;
-    }
-    header::after { content:''; position:absolute; bottom:0;left:40px;right:40px; height:1px; background:rgba(255,255,255,0.07); }
-    
-    .site-title { font-family:'Playfair Display',serif; font-size:2rem; font-weight:900; color:#f0ede8; letter-spacing:0.02em; }
-    .site-tagline { font-size:0.68rem; font-weight:700; letter-spacing:0.18em; text-transform:uppercase; color:rgba(240,237,232,0.35); margin-top:4px; }
-    
-    .auth-buttons { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-    .btn-login {
-      background:#4285f4; color:white; border:none; border-radius:4px;
-      font-family:'Lato',sans-serif; font-size:0.78rem; font-weight:700;
-      padding:11px 22px; cursor:pointer; display:flex; align-items:center; gap:8px;
-      transition:background 0.2s;
-    }
-    .btn-login:hover { background:#3367d6; }
-    .btn-login img { width:18px; height:18px; }
-    
-    .btn-logout {
-      background:transparent; color:rgba(240,237,232,0.7); border:1px solid rgba(255,255,255,0.3);
-      font-family:'Lato',sans-serif; font-size:0.7rem; font-weight:700;
-      padding:8px 16px; cursor:pointer; border-radius:4px; transition:all 0.2s;
-    }
-    .btn-logout:hover { background:rgba(255,255,255,0.1); color:#f0ede8; }
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Interrail Planner 2026 - Conexión Canal de la Mancha</title>
 
-    .btn-telegram {
-      background: #2ca5e0; color: white; border: none; border-radius: 4px;
-      font-family: 'Lato', sans-serif; font-size: 0.72rem; font-weight: 700;
-      letter-spacing: 0.1em; text-transform: uppercase; padding: 9px 16px;
-      text-decoration: none; display: flex; align-items: center; gap: 6px;
-      transition: background 0.2s; white-space: nowrap;
-    }
-    .btn-telegram:hover { background: #1a8fc7; }
-    
-    .user-display { display: flex; align-items: center; gap: 10px; }
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 
-    .user-avatar-wrap {
-      position: relative; cursor: pointer; display: flex; flex-direction: column;
-      align-items: center; gap: 3px;
-    }
-    .user-avatar {
-      width: 36px; height: 36px; border-radius: 50%; object-fit: cover;
-      border: 3px solid rgba(255,255,255,0.3); transition: border-color 0.2s;
-    }
-    .user-avatar-wrap:hover .user-avatar { border-color: rgba(255,255,255,0.7); }
-    .user-avatar.color-rojo     { border-color: #8b1c1c !important; box-shadow: 0 0 0 1px #8b1c1c44; }
-    .user-avatar.color-azul     { border-color: #1a4b8b !important; box-shadow: 0 0 0 1px #1a4b8b44; }
-    .user-avatar.color-amarillo { border-color: #b8860b !important; box-shadow: 0 0 0 1px #b8860b44; }
-    .user-avatar.color-verde    { border-color: #2e7d32 !important; box-shadow: 0 0 0 1px #2e7d3244; }
+    <style>
+        *{
+            box-sizing:border-box;
+            margin:0;
+            padding:0;
+            font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+        }
 
-    .user-role-badge {
-      font-size: 0.5rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
-      padding: 1px 6px; border-radius: 20px; white-space: nowrap; display: none;
-    }
-    .user-role-badge.admin { display: inline-block; background: #f0ede8; color: #1a1a18; }
-    .user-role-badge.colaborador { display: inline-block; background: var(--red); color: #f0ede8; }
+        body{
+            display:flex;
+            height:100vh;
+            background-color:#0f172a;
+            color:#f8fafc;
+            overflow:hidden;
+            position:relative;
+        }
 
-    .user-status {
-      display: flex; align-items: center; gap: 6px; padding: 4px 10px;
-      background: rgba(255,255,255,0.08); border-radius: 16px; font-size: 0.7rem;
-      color: rgba(240,237,232,0.8);
-    }
-    .user-status::before {
-      content: ''; display: inline-block; width: 6px; height: 6px;
-      background: #4CAF50; border-radius: 50%; box-shadow: 0 0 6px rgba(76,175,80,0.5);
-    }
-    
-    .btn-new {
-      background:var(--red); color:#f0ede8; border:none;
-      font-family:'Lato',sans-serif; font-size:0.78rem; font-weight:700;
-      letter-spacing:0.12em; text-transform:uppercase; padding:11px 22px;
-      cursor:pointer; transition:background 0.2s, transform 0.15s;
-    }
-    .btn-new:hover { background:#a52222; transform:translateY(-1px); }
-    .btn-new:active { transform:translateY(0); }
-    .btn-new:disabled { background:var(--mid); cursor:not-allowed; transform:none; opacity:0.7; }
-    
-    nav {
-      background:var(--bg2); border-bottom:1px solid var(--border); display:flex;
-      flex-wrap:wrap; padding:0 40px; position:sticky; top:3px; z-index:50;
-      box-shadow:0 2px 12px rgba(0,0,0,0.06);
-    }
-    nav a {
-      font-size:0.72rem; font-weight:700; letter-spacing:0.15em; text-transform:uppercase;
-      color:var(--mid); text-decoration:none; padding:15px 18px; border-bottom:2px solid transparent;
-      transition:all 0.2s; position:relative;
-    }
-    nav a:hover { color:var(--black); }
-    nav a.active { color:var(--black); border-bottom-color:var(--red); }
-    nav a.admin-only { display:none; }
-    nav a.admin-only.visible { display:block; color: var(--red); }
-    nav a.admin-only.visible:hover { color: var(--black); }
-    nav a.admin-only.visible.active { color: var(--black); }
-    
-    main { max-width:960px; margin:0 auto; padding:54px 24px 90px; }
-    .section { margin-bottom:66px; }
-    .section-head {
-      display:flex; align-items:baseline; justify-content:space-between;
-      margin-bottom:26px; padding-bottom:12px; border-bottom:2px solid var(--black); position:relative;
-    }
-    .section-head::before { content:''; position:absolute; bottom:-2px; left:0; width:28px; height:2px; background:var(--red); }
-    .section-head h2 { font-family:'Playfair Display',serif; font-size:1.25rem; font-weight:900; letter-spacing:0.02em; color:var(--black); }
-    
-    .btn-section-add {
-      background:none; border:1px solid var(--border); color:var(--mid);
-      font-family:'Lato',sans-serif; font-size:0.68rem; font-weight:700;
-      letter-spacing:0.12em; text-transform:uppercase; padding:5px 13px;
-      cursor:pointer; transition:all 0.2s; display:none;
-    }
-    .btn-section-add:hover { border-color:var(--black); color:var(--black); }
-    .btn-section-add.show { display:inline-block; }
+        #sidebar{
+            width:450px;
+            background:#1e293b;
+            border-right:1px solid #334155;
+            display:flex;
+            flex-direction:column;
+            z-index:1000;
+            box-shadow:8px 0 24px rgba(0,0,0,.35);
+        }
 
-    .posts-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px; }
-    
-    .card {
-      background:white; border:1px solid var(--border); border-top:3px solid var(--black);
-      border-left:3px solid transparent; padding:22px 22px 18px; cursor:pointer;
-      transition:border-top-color 0.2s, border-left-color 0.2s, box-shadow 0.2s, transform 0.2s; position:relative;
-      text-decoration: none; display: block;
-    }
-    .card:hover {
-      border-top-color:var(--black); border-left-color:var(--red);
-      box-shadow:4px 6px 24px rgba(0,0,0,0.09); transform:translateY(-2px) translateX(1px);
-    }
-    .card-date { font-size:0.65rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--mid); margin-bottom:6px; }
-    .card-author-top {
-      font-size:0.62rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase;
-      color:var(--red); margin-bottom:11px; display:flex; align-items:center; gap:6px;
-    }
-    .card-author-top img { width:16px; height:16px; border-radius:50%; object-fit:cover; }
-    .card-idea { font-family:'Playfair Display',serif; font-size:1rem; font-weight:700; line-height:1.5; color:var(--black); margin-bottom:16px; }
-    .card-tags { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:14px; }
-    .tag {
-      font-size:0.6rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase;
-      padding:3px 8px; background:var(--bg2); color:var(--mid); border:1px solid var(--border);
-    }
-    .card-footer {
-      display:flex; justify-content:space-between; align-items:center; margin-top:12px;
-      border-top:1px solid var(--bg2); padding-top:10px;
-    }
-    .card-author-bottom {
-      font-size:0.6rem; color:var(--mid); display:flex; align-items:center; gap:5px;
-    }
-    .card-author-bottom img { width:14px; height:14px; border-radius:50%; object-fit:cover; }
-    .card-more { font-size:0.7rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--red); opacity:0; transition:opacity 0.2s; }
-    .card:hover .card-more { opacity:1; }
-    
-    .card-actions { display:flex; gap:8px; margin-top:8px; }
-    .btn-edit {
-      background:var(--bg2); border:1px solid var(--border); color:var(--black);
-      font-family:'Lato',sans-serif; font-size:0.65rem; font-weight:700;
-      letter-spacing:0.1em; text-transform:uppercase; padding:6px 12px;
-      cursor:pointer; transition:all 0.2s; border-radius:3px;
-    }
-    .btn-edit:hover { background:var(--border); }
-    .btn-delete {
-      background:var(--bg2); border:1px solid var(--border); color:var(--red);
-      font-family:'Lato',sans-serif; font-size:0.65rem; font-weight:700;
-      letter-spacing:0.1em; text-transform:uppercase; padding:6px 12px;
-      cursor:pointer; transition:all 0.2s; border-radius:3px;
-    }
-    .btn-delete:hover { background:#fce4ec; border-color:var(--red); }
-    .empty { font-size:0.82rem; color:var(--mid); font-style:italic; padding:18px 20px; border:1px dashed var(--border); background:white; }
-    
-    #section-usuarios { display:none; }
-    #section-usuarios.visible { display:block; }
-    
-    .user-table { width:100%; border-collapse:collapse; background:white; border:1px solid var(--border); }
-    .user-table th {
-      font-size:0.65rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;
-      color:var(--mid); padding:12px 16px; text-align:left; border-bottom:2px solid var(--black); background:var(--bg2);
-    }
-    .user-table td { padding:12px 16px; border-bottom:1px solid var(--bg2); font-size:0.85rem; vertical-align:middle; }
-    .user-table tr:last-child td { border-bottom:none; }
-    .user-table tr:hover td { background:var(--bg); }
-    .user-row-info { display:flex; align-items:center; gap:10px; }
-    .user-row-name { font-weight:700; color:var(--black); }
-    .user-row-email { font-size:0.75rem; color:var(--mid); }
-    .permission-badge {
-      display:inline-block; padding:3px 10px; border-radius:20px; font-size:0.65rem;
-      font-weight:700; letter-spacing:0.1em; text-transform:uppercase;
-    }
-    .permission-badge.yes    { background:#e8f5e9; color:#2e7d32; }
-    .permission-badge.comment{ background:#e3f2fd; color:#1565c0; }
-    .permission-badge.no     { background:#fce4ec; color:#c62828; }
-    .permission-badge.admin  { background:#1a1a18; color:#f0ede8; }
-    .online-dot { display:inline-block; width:8px; height:8px; border-radius:50%; flex-shrink:0; }
-    .online-dot.online  { background:#4CAF50; box-shadow:0 0 5px rgba(76,175,80,0.7); }
-    .online-dot.offline { background:#bbb; }
-    .perm-btns { display:flex; gap:6px; flex-wrap:wrap; }
-    .btn-perm {
-      border:none; font-family:'Lato',sans-serif; font-size:0.62rem; font-weight:700;
-      letter-spacing:0.08em; text-transform:uppercase; padding:5px 10px;
-      cursor:pointer; transition:all 0.2s; border-radius:3px; white-space:nowrap;
-    }
-    .btn-perm.grant-comment { background:#e3f2fd; color:#1565c0; }
-    .btn-perm.grant-comment:hover { background:#1565c0; color:white; }
-    .btn-perm.grant-write   { background:#e8f5e9; color:#2e7d32; }
-    .btn-perm.grant-write:hover { background:#2e7d32; color:white; }
-    .btn-perm.revoke-all    { background:#fce4ec; color:#c62828; }
-    .btn-perm.revoke-all:hover { background:#c62828; color:white; }
-    
-    .overlay {
-      display: none; position: fixed; inset: 0;
-      background: rgba(20,20,18,0.75); z-index: 200;
-      align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(2px);
-    }
-    .overlay.open { display: flex; }
-    .form-box {
-      background: white; max-width: 560px; width: 100%;
-      border-top: 4px solid var(--black); position: relative;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.25); animation: up 0.25s ease; max-height: 85vh; overflow-y: auto;
-    }
-    .form-head { padding: 26px 28px 18px; border-bottom: 1px solid var(--border); }
-    .form-head h2 { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; color: var(--black); }
-    .form-body { padding: 24px 28px; display: flex; flex-direction: column; gap: 18px; }
-    .form-group { display: flex; flex-direction: column; gap: 7px; }
-    .form-group label { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mid); }
-    .form-group input, .form-group textarea, .form-group select {
-      border: 1px solid var(--border); border-bottom-width: 2px;
-      background: var(--bg); color: var(--black); font-family: 'Lato', sans-serif;
-      font-size: 0.95rem; font-weight: 300; padding: 10px 12px; outline: none;
-      transition: border-color 0.2s, background 0.2s; resize: vertical;
-    }
-    .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
-      border-color: var(--black); border-bottom-color: var(--red); background: white;
-    }
-    .btn-upload {
-      background: var(--bg2); border: 2px dashed var(--border); padding: 12px 20px;
-      text-align: center; cursor: pointer; border-radius: 4px; transition: all 0.2s; font-size: 0.9rem; color: var(--black);
-    }
-    .btn-upload:hover { border-color: var(--black); background: var(--bg); }
-    .editor-toolbar {
-      display: flex; align-items: center; gap: 2px; flex-wrap: wrap;
-      padding: 6px 8px; background: var(--bg2); border: 1px solid var(--border); border-bottom: none;
-    }
-    .toolbar-btn {
-      background: none; border: 1px solid transparent; color: var(--dark);
-      font-family: 'Lato', sans-serif; font-size: 0.8rem; font-weight: 700;
-      padding: 4px 9px; cursor: pointer; border-radius: 3px; transition: all 0.15s; min-width: 28px; text-align: center; line-height: 1.4;
-    }
-    .toolbar-btn:hover { background: var(--border); border-color: var(--border); }
-    .toolbar-btn:active { background: var(--black); color: white; }
-    .toolbar-sep { width: 1px; height: 18px; background: var(--border); margin: 0 4px; }
-    .editor-content {
-      border: 1px solid var(--border); border-bottom-width: 2px;
-      background: var(--bg); color: var(--black); font-family: 'Lato', sans-serif;
-      font-size: 0.95rem; font-weight: 300; padding: 10px 12px; outline: none;
-      min-height: 160px; max-height: 340px; overflow-y: auto;
-      transition: border-color 0.2s, background 0.2s; line-height: 1.7;
-    }
-    .editor-content:focus { border-color: var(--black); border-bottom-color: var(--red); background: white; }
-    .editor-content[placeholder]:empty::before { content: attr(placeholder); color: #aaa; pointer-events: none; display: block; }
-    .editor-content h2 { font-family: 'Playfair Display', serif; font-size: 1.15rem; font-weight: 700; margin: 12px 0 6px; }
-    .editor-content p  { margin-bottom: 0.8em; }
-    .editor-content ul { padding-left: 1.4em; margin-bottom: 0.8em; }
-    .editor-content li { margin-bottom: 0.3em; }
-    .editor-content img { max-width: 45%; height: auto; margin: 6px 14px 6px 0; float: left; border-radius: 3px; cursor: pointer; }
-    .editor-content img.float-right { float: right; margin: 6px 0 6px 14px; }
-    .editor-content img.full-width { max-width: 100%; float: none; display: block; margin: 12px auto; }
-    .editor-content video { max-width:100%; display:block; margin:16px auto; border-radius:4px; background:#000; }
-    .editor-content .yt-embed { position:relative; padding-bottom:56.25%; height:0; margin:20px 0; clear:both; }
-    .editor-content .yt-embed iframe { position:absolute; top:0; left:0; width:100%; height:100%; border:none; border-radius:4px; }
-    .file-list-preview { margin-top: 10px; }
-    .file-preview-item {
-      display: flex; align-items: center; gap: 8px; padding: 6px 10px;
-      background: var(--bg); border: 1px solid var(--border); border-radius: 4px; margin-bottom: 5px; font-size: 0.85rem;
-    }
-    .file-preview-item .remove-file { cursor: pointer; color: var(--red); font-weight: bold; padding: 0 5px; }
-    .form-foot {
-      padding: 14px 28px 24px; display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border);
-    }
-    .btn-cancel {
-      background: none; border: 1px solid var(--border); color: var(--mid);
-      font-family: 'Lato', sans-serif; font-size: 0.72rem; font-weight: 700;
-      letter-spacing: 0.1em; text-transform: uppercase; padding: 9px 18px; cursor: pointer; transition: all 0.2s;
-    }
-    .btn-cancel:hover { border-color: var(--mid); color: var(--black); }
-    .btn-pub {
-      background: var(--black); border: none; color: white;
-      font-family: 'Lato', sans-serif; font-size: 0.72rem; font-weight: 700;
-      letter-spacing: 0.1em; text-transform: uppercase; padding: 9px 24px; cursor: pointer; transition: background 0.2s;
-    }
-    .btn-pub:hover { background: var(--red); }
-    .btn-pub:disabled { background: var(--mid); cursor: not-allowed; }
-    .modal-close {
-      position: absolute; top: 14px; right: 18px; background: none; border: none;
-      font-size: 1rem; cursor: pointer; color: var(--mid); transition: color 0.15s;
-      min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;
-    }
-    .modal-close:hover { color: var(--black); }
-    .name-modal-box {
-      background: white; max-width: 460px; width: 100%;
-      border-top: 4px solid var(--red); position: relative;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.25); animation: up 0.25s ease; padding: 30px 32px;
-    }
-    .name-modal-box h2 { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; color: var(--black); margin-bottom: 6px; }
-    .name-modal-box p { font-size: 0.82rem; color: var(--mid); margin-bottom: 20px; line-height:1.5; }
-    .name-input-row { display:flex; gap:8px; margin-bottom:22px; }
-    .name-input-row input {
-      flex:1; border:1px solid var(--border); border-bottom-width:2px; background:var(--bg);
-      color:var(--black); font-family:'Lato',sans-serif; font-size:0.95rem; padding:10px 12px; outline:none; transition:border-color 0.2s;
-    }
-    .name-input-row input:focus { border-color:var(--black); border-bottom-color:var(--red); background:white; }
-    .btn-save-name {
-      background:var(--black); color:white; border:none; font-family:'Lato',sans-serif;
-      font-size:0.72rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase;
-      padding:10px 18px; cursor:pointer; transition:background 0.2s; white-space:nowrap;
-    }
-    .btn-save-name:hover { background:var(--red); }
-    .color-picker-label { font-size:0.65rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--mid); margin-bottom:10px; display:block; }
-    .color-options { display:flex; gap:12px; }
-    .color-opt {
-      width:36px; height:36px; border-radius:50%; cursor:pointer; border:3px solid transparent;
-      transition:all 0.2s; position:relative; display:flex; align-items:center; justify-content:center;
-    }
-    .color-opt:hover { transform:scale(1.1); }
-    .color-opt.selected { border-color: var(--black) !important; }
-    .color-opt.selected::after { content:'✓'; color:white; font-size:0.85rem; font-weight:900; text-shadow:0 1px 2px rgba(0,0,0,0.5); }
-    .color-opt[data-color="ninguno"]  { background: #ccc8c0; }
-    .color-opt[data-color="rojo"]     { background: #8b1c1c; }
-    .color-opt[data-color="azul"]     { background: #1a4b8b; }
-    .color-opt[data-color="amarillo"] { background: #b8860b; }
-    .color-opt[data-color="verde"]    { background: #2e7d32; }
-    
-    @keyframes up { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
-    ::-webkit-scrollbar { width:4px; }
-    ::-webkit-scrollbar-track { background:var(--bg2); }
-    ::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
-    
-    @media(max-width:580px){
-      header{ padding:20px 16px 16px; flex-direction:column; align-items:flex-start; gap:12px; }
-      .site-title{ font-size:1.5rem; }
-      .auth-buttons{ width:100%; justify-content:flex-end; }
-      .btn-login{ padding:10px 16px; font-size:0.75rem; min-height:44px; }
-      .btn-logout{ padding:8px 14px; font-size:0.65rem; min-height:44px; }
-      .user-avatar{ width:32px; height:32px; }
-      .btn-new{ padding:10px 18px; font-size:0.7rem; min-height:44px; }
-      nav{ padding:0; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
-      nav::-webkit-scrollbar{ display:none; }
-      nav a{ padding:14px 12px; font-size:0.65rem; white-space:nowrap; min-height:44px; display:flex; align-items:center; }
-      main{ padding:24px 12px 40px; }
-      .section{ margin-bottom:40px; }
-      .section-head{ flex-direction:column; gap:10px; margin-bottom:20px; }
-      .section-head h2{ font-size:1.1rem; }
-      .btn-section-add{ padding:8px 16px; font-size:0.65rem; min-height:44px; width:100%; text-align:center; }
-      .posts-grid{ grid-template-columns:1fr; gap:12px; }
-      .card{ padding:18px 16px 16px; }
-      .overlay{ padding:0; }
-      .form-box{ width:100%; max-width:100%; height:100%; max-height:100vh; border-radius:0; }
-      .form-body{ padding:16px; overflow-y:auto; }
-      .form-group input, .form-group textarea, .form-group select{ padding:12px; font-size:16px; min-height:44px; }
-      .form-foot{ padding:12px 16px 20px; flex-direction:column-reverse; gap:8px; }
-      .btn-cancel, .btn-pub{ width:100%; padding:12px 20px; min-height:48px; font-size:0.75rem; }
-      .user-table { font-size:0.75rem; }
-      .user-table th, .user-table td { padding:8px 10px; }
-    }
-  </style>
+        .header{
+            padding:24px;
+            background:#111827;
+            border-bottom:1px solid #334155;
+        }
+
+        .header h1{
+            font-size:22px;
+            font-weight:800;
+            color:#fff;
+            letter-spacing:-.5px;
+            display:flex;
+            align-items:center;
+            gap:8px;
+        }
+
+        .header p{
+            font-size:13px;
+            color:#94a3b8;
+            margin-top:6px;
+            line-height:1.4;
+        }
+
+        .search-container{
+            position:relative;
+            padding:20px;
+            background:#1e293b;
+            border-bottom:1px solid #334155;
+        }
+
+        .search-box{
+            position:relative;
+            display:flex;
+            align-items:center;
+        }
+
+        .search-box input{
+            width:100%;
+            padding:14px 16px 14px 42px;
+            background:#0f172a;
+            border:1px solid #475569;
+            border-radius:10px;
+            color:#fff;
+            font-size:15px;
+            outline:none;
+            transition:all .25s ease;
+        }
+
+        .search-box input:focus{
+            border-color:#3b82f6;
+            box-shadow:0 0 0 3px rgba(59,130,246,.25);
+            background:#111827;
+        }
+
+        .search-box::before{
+            content:'🔍';
+            position:absolute;
+            left:14px;
+            color:#94a3b8;
+            font-size:16px;
+            pointer-events:none;
+        }
+
+        .suggestions-list{
+            position:absolute;
+            top:74px;
+            left:20px;
+            right:20px;
+            background:#1e293b;
+            border:1px solid #475569;
+            border-radius:10px;
+            max-height:260px;
+            overflow-y:auto;
+            z-index:2000;
+            list-style:none;
+            display:none;
+            box-shadow:0 12px 30px rgba(0,0,0,.5);
+            padding:6px 0;
+        }
+
+        .suggestions-list li{
+            padding:12px 18px;
+            font-size:14px;
+            color:#e2e8f0;
+            cursor:pointer;
+            transition:all .15s ease;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+        }
+
+        .suggestions-list li:hover{
+            background:#3b82f6;
+            color:#fff;
+            padding-left:22px;
+        }
+
+        .cards-container{
+            padding:20px 20px 5px 20px;
+            display:flex;
+            flex-direction:column;
+            gap:12px;
+        }
+
+        .premium-card{
+            padding:16px;
+            border-radius:14px;
+            background:linear-gradient(135deg,#311042 0%,#1e1b4b 100%);
+            border:1px solid #581c87;
+        }
+
+        .premium-card.budget{
+            background:linear-gradient(135deg,#0f172a 0%,#1e3a8a 100%);
+            border-color:#1d4ed8;
+        }
+
+        .premium-card h3{
+            font-size:11px;
+            text-transform:uppercase;
+            letter-spacing:1.2px;
+            color:#c084fc;
+            margin-bottom:4px;
+            font-weight:700;
+        }
+
+        .premium-card.budget h3{
+            color:#60a5fa;
+        }
+
+        .premium-card .value{
+            font-size:17px;
+            font-weight:800;
+            color:#fff;
+        }
+
+        .premium-card .subtext{
+            font-size:11.5px;
+            color:#94a3b8;
+            margin-top:5px;
+            line-height:1.4;
+        }
+
+        .destinations-container{
+            flex:1;
+            padding:20px;
+            overflow-y:auto;
+        }
+
+        .destinations-list{
+            list-style:none;
+            position:relative;
+        }
+
+        .destinations-list::before{
+            content:'';
+            position:absolute;
+            left:16px;
+            top:24px;
+            bottom:24px;
+            width:2px;
+            background:#475569;
+            z-index:1;
+        }
+
+        .destination-item{
+            background:#111827;
+            padding:16px;
+            margin-bottom:14px;
+            border-radius:12px;
+            border:1px solid #334155;
+            position:relative;
+            z-index:2;
+        }
+
+        .item-main{
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+        }
+
+        .destination-info{
+            display:flex;
+            align-items:center;
+            gap:14px;
+        }
+
+        .badge-number{
+            background:#3b82f6;
+            color:#fff;
+            font-weight:800;
+            width:26px;
+            height:26px;
+            border-radius:50%;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:13px;
+        }
+
+        .badge-number.origin{
+            background:#10b981;
+        }
+
+        .badge-number.final-stop{
+            background:#ef4444;
+        }
+
+        .city-name{
+            font-size:15px;
+            font-weight:700;
+            color:#f8fafc;
+        }
+
+        .stay-counter{
+            display:flex;
+            align-items:center;
+            gap:8px;
+            font-size:13px;
+            color:#cbd5e1;
+            margin-top:10px;
+            margin-left:40px;
+            background:#1e293b;
+            padding:6px 12px;
+            border-radius:6px;
+            width:fit-content;
+        }
+
+        .stay-counter input{
+            width:50px;
+            padding:4px;
+            background:#0f172a;
+            border:1px solid #475569;
+            border-radius:4px;
+            color:white;
+            text-align:center;
+            font-weight:bold;
+        }
+
+        .stay-counter.origin-label{
+            background:#064e3b;
+            color:#a7f3d0;
+            font-weight:600;
+        }
+
+        .stay-counter.final-label{
+            background:#7f1d1d;
+            color:#fca5a5;
+            font-weight:600;
+        }
+
+        .train-leg-info{
+            margin-top:12px;
+            margin-left:40px;
+            padding:10px 14px;
+            background:#1e293b;
+            border-left:3px solid #f97316;
+            font-size:12.5px;
+            color:#cbd5e1;
+            border-radius:0 8px 8px 0;
+        }
+
+        .train-leg-info.tunnel-leg{
+            border-left-color:#a855f7;
+            background:#2e1065;
+        }
+
+        .train-leg-info.country-warning{
+            border-left-color:#eab308;
+            background:#451a03;
+            color:#fef08a;
+            font-size:11.5px;
+            margin-top:6px;
+        }
+
+        .btn-delete{
+            background:none;
+            border:none;
+            color:#64748b;
+            cursor:pointer;
+            font-size:16px;
+        }
+
+        .btn-delete:hover{
+            color:#ef4444;
+        }
+
+        .action-container{
+            padding:14px 20px;
+            background:#111827;
+            border-top:1px solid #334155;
+            display:flex;
+            flex-direction:column;
+            gap:10px;
+        }
+
+        .btn-finish{
+            width:100%;
+            padding:14px;
+            background:linear-gradient(135deg,#10b981 0%,#059669 100%);
+            color:white;
+            border:none;
+            border-radius:10px;
+            font-size:15px;
+            font-weight:700;
+            cursor:pointer;
+            box-shadow:0 4px 14px rgba(16,185,129,.3);
+        }
+
+        .btn-finish:hover{
+            filter:brightness(1.1);
+        }
+
+        .btn-return{
+            width:100%;
+            padding:10px;
+            background:#334155;
+            color:#e2e8f0;
+            border:1px dashed #475569;
+            border-radius:8px;
+            font-size:13px;
+            font-weight:600;
+            cursor:pointer;
+            transition:all .2s;
+        }
+
+        .btn-return:hover{
+            background:#475569;
+            color:white;
+        }
+
+        #map{
+            flex:1;
+            height:100%;
+            background:#0f172a;
+        }
+
+        .marker-pin{
+            background:#111827;
+            color:#f59e0b;
+            width:28px;
+            height:28px;
+            border-radius:50%;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-weight:800;
+            border:2.5px solid #fff;
+            box-shadow:0 4px 12px rgba(0,0,0,.4);
+            font-size:13px;
+        }
+
+        .marker-pin.origin-pin{
+            color:#10b981;
+        }
+
+        .marker-pin.final-pin{
+            color:#ef4444;
+        }
+
+        .modal-overlay{
+            position:fixed;
+            top:0;
+            left:0;
+            right:0;
+            bottom:0;
+            background:rgba(15,23,42,.75);
+            backdrop-filter:blur(8px);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            z-index:3000;
+            opacity:0;
+            pointer-events:none;
+            transition:opacity .3s ease;
+        }
+
+        .modal-overlay.active{
+            opacity:1;
+            pointer-events:auto;
+        }
+
+        .modal-box{
+            background:#1e293b;
+            width:90%;
+            max-width:650px;
+            border-radius:16px;
+            border:1px solid #475569;
+            box-shadow:0 20px 50px rgba(0,0,0,.6);
+            padding:28px;
+            display:flex;
+            flex-direction:column;
+            gap:20px;
+            max-height:90vh;
+        }
+
+        .modal-box h2{
+            font-size:24px;
+            font-weight:800;
+            color:white;
+            border-bottom:1px solid #334155;
+            padding-bottom:12px;
+        }
+
+        .modal-body{
+            overflow-y:auto;
+            display:flex;
+            flex-direction:column;
+            gap:16px;
+            font-size:14px;
+            color:#cbd5e1;
+            line-height:1.5;
+        }
+
+        .modal-section{
+            background:#111827;
+            padding:16px;
+            border-radius:10px;
+            border:1px solid #334155;
+        }
+
+        .modal-section h3{
+            font-size:13px;
+            color:#3b82f6;
+            text-transform:uppercase;
+            margin-bottom:6px;
+        }
+
+        .btn-close-modal{
+            padding:12px;
+            background:#334155;
+            color:white;
+            border:none;
+            border-radius:8px;
+            font-size:14px;
+            font-weight:600;
+            cursor:pointer;
+            text-align:center;
+        }
+
+        #summary-map{
+            height:300px;
+            border-radius:12px;
+            overflow:hidden;
+            margin-top:10px;
+        }
+    </style>
 </head>
+
 <body>
 
-<header>
-  <div>
-    <div class="site-title">Mis Ideas</div>
-    <div class="site-tagline">Cuaderno de pensamiento</div>
-  </div>
-  <div class="auth-buttons">
-    <div id="user-display" class="user-display" style="display:none;">
-      <div class="user-avatar-wrap" onclick="openNameModal()" title="Cambiar nombre">
-        <img id="user-avatar" class="user-avatar" src="" alt="Perfil">
-        <span id="user-role-badge" class="user-role-badge"></span>
-      </div>
-      <span class="user-status" id="user-display-name">Conectado</span>
-      <button class="btn-logout" onclick="logout()">Salir</button>
+<div id="sidebar">
+
+    <div class="header">
+        <h1>🇪🇺 Interrail Planner 2026</h1>
+        <p>
+            Control de enrutamiento ferroviario por el Eurotúnel y validación
+            de trayectos nacionales en tu país de origen.
+        </p>
     </div>
-    <button id="btn-login" class="btn-login" onclick="loginWithGoogle()">
-      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G">
-      Acceder
-    </button>
-    <a href="https://t.me/+6d1mQnI_ElplNmNk" target="_blank" id="btn-telegram" class="btn-telegram" style="display:none;">✈️ Notificaciones</a>
-    <button id="btn-new-idea" class="btn-new" onclick="openForm()" style="display:none;">+ Nueva idea</button>
-  </div>
-</header>
 
-<nav id="nav">
-  <a href="#" onclick="filter(event,'all')" class="active" data-sec="all">Todo</a>
-  <a href="#" onclick="filter(event,'politica')" data-sec="politica">Política</a>
-  <a href="#" onclick="filter(event,'sociedad')" data-sec="sociedad">Sociedad</a>
-  <a href="#" onclick="filter(event,'economia')" data-sec="economia">Economía</a>
-  <a href="#" onclick="filter(event,'cultura')" data-sec="cultura">Cultura</a>
-  <a href="#" onclick="filter(event,'historia')" data-sec="historia">Historia</a>
-  <a href="#" onclick="filter(event,'usuarios')" data-sec="usuarios" class="admin-only" id="nav-usuarios">👥 Usuarios</a>
-</nav>
-
-<main>
-  <div class="section" id="politica">
-    <div class="section-head"><h2>Política</h2><button class="btn-section-add" onclick="openForm('politica')" id="btn-add-politica">+ Añadir</button></div>
-    <div class="posts-grid" id="grid-politica"></div>
-  </div>
-  <div class="section" id="sociedad">
-    <div class="section-head"><h2>Sociedad</h2><button class="btn-section-add" onclick="openForm('sociedad')" id="btn-add-sociedad">+ Añadir</button></div>
-    <div class="posts-grid" id="grid-sociedad"></div>
-  </div>
-  <div class="section" id="economia">
-    <div class="section-head"><h2>Economía</h2><button class="btn-section-add" onclick="openForm('economia')" id="btn-add-economia">+ Añadir</button></div>
-    <div class="posts-grid" id="grid-economia"></div>
-  </div>
-  <div class="section" id="cultura">
-    <div class="section-head"><h2>Cultura</h2><button class="btn-section-add" onclick="openForm('cultura')" id="btn-add-cultura">+ Añadir</button></div>
-    <div class="posts-grid" id="grid-cultura"></div>
-  </div>
-  <div class="section" id="historia">
-    <div class="section-head"><h2>Historia</h2><button class="btn-section-add" onclick="openForm('historia')" id="btn-add-historia">+ Añadir</button></div>
-    <div class="posts-grid" id="grid-historia"></div>
-  </div>
-  <div class="section" id="section-usuarios">
-    <div class="section-head"><h2>👥 Usuarios registrados</h2></div>
-    <div id="usuarios-content"><p style="color:var(--mid); font-style:italic;">Cargando usuarios...</p></div>
-  </div>
-</main>
-
-<!-- Modal nueva/editar idea -->
-<div class="overlay" id="form-overlay" onclick="closeIfOutside(event,'form-overlay')">
-  <div class="form-box">
-    <button class="modal-close" onclick="close_('form-overlay')">✕</button>
-    <div class="form-head"><h2 id="form-title">Nueva idea</h2></div>
-    <div class="form-body">
-      <div class="form-group">
-        <label>Sección</label>
-        <select id="f-sec">
-          <option value="politica">Política</option>
-          <option value="sociedad">Sociedad</option>
-          <option value="economia">Economía</option>
-          <option value="cultura">Cultura</option>
-          <option value="historia">Historia</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Idea en una frase</label>
-        <input id="f-idea" type="text" placeholder="La idea principal...">
-      </div>
-      <div class="form-group">
-        <label>Desarrollo</label>
-        <div class="editor-toolbar">
-          <button type="button" class="toolbar-btn" onclick="fmt('bold')"><b>N</b></button>
-          <button type="button" class="toolbar-btn" onclick="fmt('italic')"><i>C</i></button>
-          <button type="button" class="toolbar-btn" onclick="fmt('underline')"><u>S</u></button>
-          <div class="toolbar-sep"></div>
-          <button type="button" class="toolbar-btn" onclick="fmtBlock('h2')">T</button>
-          <button type="button" class="toolbar-btn" onclick="fmtBlock('p')">¶</button>
-          <div class="toolbar-sep"></div>
-          <button type="button" class="toolbar-btn" onclick="fmt('insertUnorderedList')">• Lista</button>
-          <div class="toolbar-sep"></div>
-          <button type="button" class="toolbar-btn" onclick="insertImagen()" title="Insertar imagen">🖼️ Foto</button>
-          <button type="button" class="toolbar-btn" onclick="insertVideo()" title="Subir video">🎬 Video</button>
-          <button type="button" class="toolbar-btn" onclick="insertYoutube()" title="Incrustar YouTube">▶️ YouTube</button>
+    <div class="search-container">
+        <div class="search-box">
+            <input
+                type="text"
+                id="city-input"
+                placeholder="Añade origen de salida..."
+                autocomplete="off"
+            />
         </div>
-        <input type="file" id="f-img-input" accept="image/*" style="display:none" onchange="handleImageInsert(event)">
-        <input type="file" id="f-vid-input" accept="video/*" style="display:none" onchange="handleVideoInsert(event)">
-        <div id="f-body" class="editor-content" contenteditable="true" placeholder="Escribe tu argumento completo..."></div>
-      </div>
-      <div class="form-group">
-        <label>Etiquetas (separadas por coma)</label>
-        <input id="f-tags" type="text" placeholder="nación, orden, política">
-      </div>
-      <div class="form-group">
-        <label>Archivos adjuntos</label>
-        <input type="file" id="f-file-input" multiple style="display:none" onchange="handleFileSelect(event)">
-        <div class="btn-upload" onclick="document.getElementById('f-file-input').click()">📎 Click para seleccionar archivos</div>
-        <div class="file-list-preview" id="file-preview"></div>
-      </div>
+
+        <ul id="suggestions" class="suggestions-list"></ul>
     </div>
-    <div class="form-foot">
-      <button class="btn-cancel" onclick="close_('form-overlay')">Cancelar</button>
-      <button class="btn-pub" onclick="publish()" id="btn-publish">Publicar</button>
-    </div>
-  </div>
-</div>
 
-<!-- Modal cambiar nombre -->
-<div class="overlay" id="name-overlay" onclick="closeIfOutside(event,'name-overlay')">
-  <div class="name-modal-box">
-    <button class="modal-close" onclick="close_('name-overlay')">✕</button>
-    <h2>Tu perfil público</h2>
-    <p>Tu nombre y color aparecerán como autor en las ideas y en el chat.</p>
-    <div class="name-input-row">
-      <input id="custom-name-input" type="text" placeholder="Tu nombre...">
-      <button class="btn-save-name" onclick="saveName()">Guardar</button>
-    </div>
-    <span class="color-picker-label">Color de tu borde</span>
-    <div class="color-options">
-      <div class="color-opt" data-color="ninguno" onclick="selectColor('ninguno')" title="Sin color"></div>
-      <div class="color-opt" data-color="rojo"     onclick="selectColor('rojo')"     title="Rojo"></div>
-      <div class="color-opt" data-color="azul"     onclick="selectColor('azul')"     title="Azul"></div>
-      <div class="color-opt" data-color="amarillo" onclick="selectColor('amarillo')" title="Amarillo"></div>
-      <div class="color-opt" data-color="verde"    onclick="selectColor('verde')"    title="Verde"></div>
-    </div>
-  </div>
-</div>
+    <div class="cards-container">
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-  import { getFirestore, collection, addDoc, getDocs, query, Timestamp, doc, updateDoc, setDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
-  import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyD57cIHb-k4bhMwKvoDHp2uOcJw_EDPVxg",
-    authDomain: "netnull-a9a18.firebaseapp.com",
-    projectId: "netnull-a9a18",
-    storageBucket: "netnull-a9a18.firebasestorage.app",
-    messagingSenderId: "85420219235",
-    appId: "1:85420219235:web:b7a93121caa8519602d156"
-  };
-
-  const supabaseUrl = 'https://epuppytaijalxggsmnhn.supabase.co';
-  const supabaseAnonKey = 'sb_publishable_nHDee2p3jhqi1iKsANLXJQ_FHZTqIiv';
-  const supabase = createClient(supabaseUrl, supabaseAnonKey);
-  const SUPABASE_BUCKET = 'archivos';
-  const ADMIN_EMAIL = 'nilelpeque@gmail.com';
-  
-
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  const auth = getAuth(app);
-  const provider = new GoogleAuthProvider();
-
-
-  // ——— STATE ———
-  let posts = [], currentUser = null, isAdmin = false, canWrite = false, canComment = false;
-  let myDisplayName = '', myProfileColor = 'ninguno', editingId = null, selectedFiles = [], selectedColor = 'ninguno';
-
-  const LABELS = { politica:'Política', sociedad:'Sociedad', economia:'Economía', cultura:'Cultura', historia:'Historia' };
-  const SECS = Object.keys(LABELS);
-
-  // ——— AUTH ———
-  window.loginWithGoogle = async function() {
-    try { await signInWithPopup(auth, provider); }
-    catch (err) { alert("Error: " + err.message); }
-  };
-  window.logout = async function() { await signOut(auth); };
-
-  onAuthStateChanged(auth, async (user) => {
-    currentUser = user;
-    if (user) {
-      isAdmin = user.email === ADMIN_EMAIL;
-      if (isAdmin) { canWrite = true; canComment = true; }
-      myDisplayName = user.displayName || user.email.split('@')[0];
-      updateUI();
-      try {
-        await registerUser(user);
-        const userData = await getUserData(user.uid);
-        if (userData?.displayName) myDisplayName = userData.displayName;
-        myProfileColor = userData?.profileColor || 'ninguno';
-        canWrite = isAdmin || userData?.canWrite === true;
-        canComment = canWrite || userData?.canComment === true;
-        await updateDoc(doc(db, 'usuarios', user.uid), { lastSeen: Timestamp.now() });
-        setInterval(async () => {
-          if (auth.currentUser) try { await updateDoc(doc(db, 'usuarios', auth.currentUser.uid), { lastSeen: Timestamp.now() }); } catch {}
-        }, 60000);
-        updateUI();
-      } catch (e) { console.warn('Error al cargar usuario:', e.message); }
-    } else {
-      isAdmin = false; canWrite = false; canComment = false; myDisplayName = ''; myProfileColor = 'ninguno';
-      updateUI();
-    }
-    cargarIdeas();
-    if (isAdmin) loadUsuarios();
-  });
-
-  async function registerUser(user) {
-    const ref = doc(db, 'usuarios', user.uid);
-    const snap = await getDoc(ref);
-    if (!snap.exists()) {
-      await setDoc(ref, { email: user.email, displayName: user.displayName || user.email.split('@')[0], photoURL: user.photoURL || '', canWrite: false, canComment: false, profileColor: 'ninguno', lastSeen: Timestamp.now(), firstSeen: Timestamp.now() });
-    } else {
-      await updateDoc(ref, { email: user.email, photoURL: user.photoURL || snap.data().photoURL || '' });
-    }
-  }
-
-  async function getUserData(uid) {
-    try { const snap = await getDoc(doc(db, 'usuarios', uid)); return snap.exists() ? snap.data() : null; }
-    catch { return null; }
-  }
-
-  function updateUI() {
-    const btnLogin = document.getElementById('btn-login');
-    const userDisplay = document.getElementById('user-display');
-    const userAvatar = document.getElementById('user-avatar');
-    const userDisplayName = document.getElementById('user-display-name');
-    const navUsuarios = document.getElementById('nav-usuarios');
-    const addBtns = document.querySelectorAll('.btn-section-add');
-
-    if (currentUser) {
-      btnLogin.style.display = 'none';
-      userDisplay.style.display = 'flex';
-      userAvatar.src = currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=1a1a18&color=f0ede8`;
-      userDisplayName.textContent = myDisplayName;
-      userAvatar.className = 'user-avatar' + (myProfileColor && myProfileColor !== 'ninguno' ? ` color-${myProfileColor}` : '');
-      const badge = document.getElementById('user-role-badge');
-      if (isAdmin) { badge.textContent = 'Admin'; badge.className = 'user-role-badge admin'; }
-      else if (canWrite) { badge.textContent = 'Colaborador'; badge.className = 'user-role-badge colaborador'; }
-      else { badge.className = 'user-role-badge'; }
-      document.getElementById('btn-telegram').style.display = 'flex';
-    } else {
-      btnLogin.style.display = 'inline-block';
-      userDisplay.style.display = 'none';
-      document.getElementById('btn-telegram').style.display = 'none';
-    }
-
-    if (canWrite) { document.getElementById('btn-new-idea').style.display = 'inline-block'; addBtns.forEach(b => b.classList.add('show')); }
-    else { document.getElementById('btn-new-idea').style.display = 'none'; addBtns.forEach(b => b.classList.remove('show')); }
-
-    if (isAdmin) navUsuarios.classList.add('visible');
-    else { navUsuarios.classList.remove('visible'); document.getElementById('section-usuarios').classList.remove('visible'); }
-  }
-
-  // ——— NOMBRE Y COLOR ———
-  window.openNameModal = function() {
-    if (!currentUser) return;
-    document.getElementById('custom-name-input').value = myDisplayName;
-    selectedColor = myProfileColor || 'ninguno';
-    document.querySelectorAll('.color-opt').forEach(el => el.classList.toggle('selected', el.dataset.color === selectedColor));
-    open_('name-overlay');
-  };
-  window.selectColor = function(color) {
-    selectedColor = color;
-    document.querySelectorAll('.color-opt').forEach(el => el.classList.toggle('selected', el.dataset.color === color));
-  };
-  window.saveName = async function() {
-    const name = document.getElementById('custom-name-input').value.trim();
-    if (!name) { alert('Escribe un nombre.'); return; }
-    try {
-      await updateDoc(doc(db, 'usuarios', currentUser.uid), { displayName: name, profileColor: selectedColor });
-      myDisplayName = name; myProfileColor = selectedColor;
-      document.getElementById('user-display-name').textContent = name;
-      const snap = await getDocs(collection(db, 'ideas'));
-      await Promise.all(snap.docs.filter(d => d.data().author === currentUser.email).map(d => updateDoc(doc(db, 'ideas', d.id), { authorName: name, authorColor: selectedColor })));
-      updateUI(); close_('name-overlay'); await cargarIdeas();
-    } catch (err) { alert('Error al guardar: ' + err.message); }
-  };
-
-  // ——— USUARIOS ———
-  async function loadUsuarios() {
-    try {
-      const snap = await getDocs(collection(db, 'usuarios'));
-      renderUsuarios(snap.docs.map(d => ({ uid: d.id, ...d.data() })));
-    } catch (err) { document.getElementById('usuarios-content').innerHTML = `<p style="color:var(--red)">Error: ${err.message}</p>`; }
-  }
-
-  function renderUsuarios(usuarios) {
-    const container = document.getElementById('usuarios-content');
-    if (!usuarios.length) { container.innerHTML = '<p style="color:var(--mid);font-style:italic">No hay usuarios registrados aún.</p>'; return; }
-    const now = Date.now(), ONLINE_THR = 2 * 60 * 1000;
-    const COLORS = { rojo:'#8b1c1c', azul:'#1a4b8b', amarillo:'#b8860b', verde:'#2e7d32', ninguno:'#ccc8c0' };
-    container.innerHTML = `<table class="user-table">
-      <thead><tr><th>Usuario</th><th>Estado</th><th>Permiso</th><th>Acciones</th></tr></thead>
-      <tbody>${usuarios.map(u => {
-        const isAdminUser = u.email === ADMIN_EMAIL;
-        const color = COLORS[u.profileColor] || COLORS.ninguno;
-        const avatar = u.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.displayName||'?')}&background=1a1a18&color=f0ede8`;
-        const lastSeenMs = u.lastSeen?.toMillis?.() || 0;
-        const isOnline = lastSeenMs && (now - lastSeenMs) < ONLINE_THR;
-        const timeAgo = (ms) => {
-          if (!ms) return 'Nunca';
-          const diff = now - ms;
-          if (diff < 60000) return 'Ahora mismo';
-          if (diff < 3600000) return `hace ${Math.floor(diff/60000)} min`;
-          if (diff < 86400000) return `hace ${Math.floor(diff/3600000)}h`;
-          if (diff < 604800000) return `hace ${Math.floor(diff/86400000)} día${Math.floor(diff/86400000)>1?'s':''}`;
-          if (diff < 2592000000) return `hace ${Math.floor(diff/604800000)} semana${Math.floor(diff/604800000)>1?'s':''}`;
-          return `hace ${Math.floor(diff/2592000000)} mes${Math.floor(diff/2592000000)>1?'es':''}`;
-        };
-        const onlineText = isOnline ? 'Ahora mismo' : timeAgo(lastSeenMs);
-        const badge = isAdminUser ? '<span class="permission-badge admin">Admin</span>'
-          : u.canWrite ? '<span class="permission-badge yes">Puede escribir</span>'
-          : u.canComment ? '<span class="permission-badge comment">Solo comentar</span>'
-          : '<span class="permission-badge no">Solo lectura</span>';
-        const actions = isAdminUser ? '—' : `<div class="perm-btns">
-          ${!u.canComment && !u.canWrite ? `<button class="btn-perm grant-comment" onclick="setPermiso('${u.uid}','comment')">💬 Comentar</button>` : ''}
-          ${!u.canWrite ? `<button class="btn-perm grant-write" onclick="setPermiso('${u.uid}','write')">✍️ Escribir</button>` : ''}
-          ${(u.canComment || u.canWrite) ? `<button class="btn-perm revoke-all" onclick="setPermiso('${u.uid}','none')">⛔ Quitar</button>` : ''}
-        </div>`;
-        return `<tr>
-          <td><div class="user-row-info">
-            <div style="position:relative;flex-shrink:0;">
-              <img src="${avatar}" alt="" style="width:28px;height:28px;border-radius:50%;object-fit:cover;border:2px solid ${color};">
-              <span class="online-dot ${isOnline ? 'online' : 'offline'}" style="position:absolute;bottom:-1px;right:-1px;border:1.5px solid white;border-radius:50%;"></span>
+        <div class="premium-card">
+            <h3>Pase Oficial Recomendado</h3>
+            <div class="value" id="recommended-pass">-</div>
+            <div class="subtext" id="pass-subtext">
+                Optimizado según días de tránsito internacional activo.
             </div>
-            <div><div class="user-row-name">${u.displayName||'—'}</div><div class="user-row-email">${u.email}</div></div>
-          </div></td>
-          <td style="font-size:0.75rem;color:${isOnline ? '#2e7d32' : 'var(--mid)'};">${onlineText}</td>
-          <td>${badge}</td><td>${actions}</td>
-        </tr>`;
-      }).join('')}</tbody></table>`;
-  }
+        </div>
 
-  window.setPermiso = async function(uid, level) {
-    try {
-      await updateDoc(doc(db, 'usuarios', uid), { canWrite: level === 'write', canComment: level === 'write' || level === 'comment' });
-      await loadUsuarios();
-    } catch (err) { alert('Error: ' + err.message); }
-  };
+        <div class="premium-card budget">
+            <h3>Presupuesto Estimado</h3>
+            <div class="value" id="total-price">0 €</div>
+            <div class="subtext" id="budget-subtext">
+                Incluye reservas aproximadas.
+            </div>
+        </div>
 
-  // ——— IDEAS ———
-  window.cargarIdeas = async function() {
-    try {
-      const snap = await getDocs(query(collection(db, "ideas")));
-      posts = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-        .sort((a, b) => (b.timestamp?.toMillis?.() || 0) - (a.timestamp?.toMillis?.() || 0));
-      render();
-    } catch (e) { console.error("Error cargando ideas:", e); }
-  };
+    </div>
 
-  function render() {
-    SECS.forEach(sec => {
-      const grid = document.getElementById('grid-' + sec);
-      const sp = posts.filter(p => p.section === sec);
-      grid.innerHTML = sp.length
-        ? sp.map(p => {
-            const authorName = p.authorName || p.author?.split('@')[0] || 'Autor';
-            const authorPhoto = p.authorPhoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=1a1a18&color=f0ede8&size=32`;
-            return `<a href="detalle.html?id=${p.id}" class="card">
-              <div class="card-date">${p.date}</div>
-              <div class="card-author-top">
-                <img src="${authorPhoto}" alt="${authorName}" onerror="this.style.display='none'">
-                ${authorName}
-              </div>
-              <div class="card-idea">${p.idea}</div>
-              <div class="card-tags">${(p.tags||[]).map(t=>`<span class="tag">${t}</span>`).join('')}</div>
-              <div class="card-actions">
-                ${(isAdmin || (canWrite && p.author === currentUser?.email)) ? `<button class="btn-edit" onclick="event.stopPropagation();event.preventDefault();editIdea('${p.id}')">✏️ Editar</button>` : ''}
-                ${(isAdmin || (canWrite && p.author === currentUser?.email)) ? `<button class="btn-delete" onclick="event.stopPropagation();event.preventDefault();deleteIdea('${p.id}')">🗑️ Borrar</button>` : ''}
-              </div>
-              <div class="card-footer">
-                <div class="card-author-bottom"><img src="${authorPhoto}" alt="" onerror="this.style.display='none'"> Por ${authorName}</div>
-                <div class="card-more">Leer más →</div>
-              </div>
-            </a>`;
-          }).join('')
-        : `<div class="empty">Sin entradas aún.</div>`;
-    });
-  }
+    <div class="destinations-container">
 
-  window.deleteIdea = async function(id) {
-    if (!canWrite) { alert('🔐 Sin permisos.'); return; }
-    const post = posts.find(p => p.id === id);
-    if (!post) return;
-    if (!isAdmin && post.author !== currentUser?.email) { alert('Solo puedes borrar tus propias ideas.'); return; }
-    if (!confirm(`¿Borrar la idea "${post.idea}"? Esta acción no se puede deshacer.`)) return;
-    try {
-      await deleteDoc(doc(db, 'ideas', id));
-      await cargarIdeas();
-    } catch (err) { alert('Error al borrar: ' + err.message); }
-  };
+        <button
+            class="btn-return"
+            id="btn-trigger-return"
+            onclick="addFinalReturnStop()"
+            style="display:none;margin-bottom:12px;"
+        >
+            🔄 Añadir Última Parada
+        </button>
 
-  window.editIdea = async function(id) {
-    if (!canWrite) { alert('🔐 Sin permisos.'); return; }
-    const post = posts.find(p => p.id === id);
-    if (!post) return;
-    if (!isAdmin && post.author !== currentUser?.email) { alert('Solo puedes editar tus propias ideas.'); return; }
-    editingId = id; selectedFiles = post.files || [];
-    document.getElementById('form-title').textContent = 'Editar idea';
-    document.getElementById('f-sec').value = post.section;
-    document.getElementById('f-idea').value = post.idea;
-    document.getElementById('f-body').innerHTML = post.body || '';
-    document.getElementById('f-tags').value = (post.tags||[]).join(', ');
-    updateFilePreview();
-    document.getElementById('btn-publish').textContent = 'Actualizar';
-    open_('form-overlay');
-  };
+        <ul class="destinations-list" id="route-list"></ul>
 
-  window.openForm = function(sec) {
-    if (!canWrite) { alert('🔐 No tienes permiso para escribir.'); return; }
-    editingId = null; selectedFiles = [];
-    document.getElementById('form-title').textContent = 'Nueva idea';
-    if (sec) document.getElementById('f-sec').value = sec;
-    document.getElementById('f-idea').value = '';
-    document.getElementById('f-body').innerHTML = '';
-    document.getElementById('f-tags').value = '';
-    document.getElementById('f-file-input').value = '';
-    document.getElementById('file-preview').innerHTML = '';
-    document.getElementById('btn-publish').textContent = 'Publicar';
-    open_('form-overlay');
-  };
+    </div>
 
-  window.publish = async function() {
-    if (!canWrite) { alert('🔐 Sin permisos.'); return; }
-    const idea = document.getElementById('f-idea').value.trim();
-    const rawHTML = document.getElementById('f-body').innerHTML.trim();
-    const section = document.getElementById('f-sec').value;
-    const tagsRaw = document.getElementById('f-tags').value.trim();
-    if (!idea || !rawHTML || rawHTML === '<br>') { alert('Rellena idea y desarrollo.'); return; }
+    <div class="action-container">
+        <button class="btn-finish" onclick="openSummaryModal()">
+            💾 Finalizar Viaje
+        </button>
+    </div>
 
-    // Limpiar HTML: eliminar data: y blob: URLs que disparan el límite de Firestore
-    const tmp = document.createElement('div');
-    tmp.innerHTML = rawHTML;
-    tmp.querySelectorAll('img').forEach(img => {
-      if (img.src.startsWith('data:') || img.src.startsWith('blob:')) img.remove();
-    });
-    tmp.querySelectorAll('video').forEach(v => {
-      if (v.src.startsWith('data:') || v.src.startsWith('blob:')) v.remove();
-      // Asegurar que solo guardamos el src como atributo, sin datos extra
-      const cleanSrc = v.getAttribute('src') || v.src;
-      if (cleanSrc && cleanSrc.startsWith('http')) {
-        v.removeAttribute('id'); v.removeAttribute('data-src');
-      }
-    });
-    const bodyHTML = tmp.innerHTML.trim();
-    const tags = tagsRaw ? tagsRaw.split(',').map(t=>t.trim()).filter(Boolean) : [];
-    try {
-      const btn = document.getElementById('btn-publish');
-      btn.textContent = 'Guardando...'; btn.disabled = true;
-      if (editingId) {
-        const existing = posts.find(p => p.id === editingId);
-        const editHistory = [...(existing?.editHistory || []), { editedAt: Timestamp.now(), editedBy: myDisplayName }];
-        await updateDoc(doc(db, "ideas", editingId), { section, idea, body: bodyHTML, tags, files: selectedFiles, authorName: myDisplayName, authorPhoto: currentUser.photoURL || '', authorColor: myProfileColor || 'ninguno', editHistory });
-      } else {
-        const now = new Date();
-        const date = `${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()} · ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-        await addDoc(collection(db, "ideas"), { section, date, idea, body: bodyHTML, tags, files: selectedFiles, timestamp: Timestamp.now(), author: currentUser.email, authorName: myDisplayName, authorPhoto: currentUser.photoURL || '', authorColor: myProfileColor || 'ninguno', editHistory: [] });
-      }
-      btn.textContent = editingId ? 'Actualizar' : 'Publicar'; btn.disabled = false;
-      close_('form-overlay'); editingId = null; selectedFiles = [];
-      document.getElementById('f-file-input').value = '';
-      document.getElementById('file-preview').innerHTML = '';
-      await cargarIdeas();
-    } catch (e) {
-      alert(e.code === 'permission-denied' ? '🔐 Permiso denegado en Firebase.' : 'Error: ' + e.message);
-      document.getElementById('btn-publish').textContent = editingId ? 'Actualizar' : 'Publicar';
-      document.getElementById('btn-publish').disabled = false;
+</div>
+
+<div id="map"></div>
+
+<div id="summary-modal" class="modal-overlay">
+
+    <div class="modal-box">
+
+        <h2>🗺️ Resumen Ejecutivo de tu Ruta</h2>
+
+        <div class="modal-body" id="modal-content-body"></div>
+
+        <button class="btn-close-modal" onclick="closeSummaryModal()">
+            Volver al Editor
+        </button>
+
+    </div>
+
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+
+let travelRoute = [];
+let debounceTimer;
+let homeCountry = "";
+let isLoopClosed = false;
+
+const map = L.map('map', {
+    zoomControl:false
+}).setView([47.5,10.0],5);
+
+L.tileLayer(
+    'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+    {
+        attribution:'© OpenStreetMap'
     }
-  };
+).addTo(map);
 
-  window.handleFileSelect = async function(event) {
-    const files = Array.from(event.target.files);
-    if (!files.length) return;
-    const btn = document.getElementById('btn-publish');
-    btn.disabled = true; btn.textContent = 'Subiendo...';
-    selectedFiles = [];
-    for (const file of files) {
-      try {
-        const ext = file.name.split('.').pop();
-        const path = `${currentUser.uid}/${Date.now()}_${Math.random().toString(36).substring(2)}.${ext}`;
-        const { error } = await supabase.storage.from(SUPABASE_BUCKET).upload(path, file, { cacheControl:'3600', upsert:false });
-        if (error) throw error;
-        const { data: { publicUrl } } = supabase.storage.from(SUPABASE_BUCKET).getPublicUrl(path);
-        selectedFiles.push({ name: file.name, url: publicUrl, path });
-      } catch (err) { alert(`Error subiendo ${file.name}: ${err.message}`); }
+let markersLayer = L.layerGroup().addTo(map);
+let linesLayer = L.layerGroup().addTo(map);
+
+const cityInput = document.getElementById('city-input');
+const suggestionsLog = document.getElementById('suggestions');
+
+cityInput.addEventListener('input', () => {
+
+    clearTimeout(debounceTimer);
+
+    const query = cityInput.value.trim();
+
+    if(query.length < 3){
+        suggestionsLog.style.display = 'none';
+        return;
     }
-    updateFilePreview();
-    btn.disabled = false; btn.textContent = editingId ? 'Actualizar' : 'Publicar';
-  };
 
-  function updateFilePreview() {
-    document.getElementById('file-preview').innerHTML = selectedFiles.map((f, i) => `
-      <div class="file-preview-item"><span>📄 ${f.name}</span><span class="remove-file" onclick="removeFile(${i})">×</span></div>`).join('');
-  }
-  window.removeFile = function(i) { selectedFiles.splice(i, 1); updateFilePreview(); };
+    debounceTimer = setTimeout(() => {
+        fetchSuggestions(query);
+    },250);
 
-  window.filter = function(e, sec) {
-    e.preventDefault();
-    document.querySelectorAll('nav a').forEach(a => a.classList.toggle('active', a.dataset.sec === sec));
-    document.querySelectorAll('.section').forEach(s => {
-      if (s.id === 'section-usuarios') return;
-      s.style.display = (sec === 'all' || s.id === sec) ? '' : 'none';
-    });
-    const usersPanel = document.getElementById('section-usuarios');
-    if (sec === 'usuarios' && isAdmin) { usersPanel.classList.add('visible'); loadUsuarios(); }
-    else usersPanel.classList.remove('visible');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+});
 
-  // ——— IMÁGENES EN EDITOR ———
-  let savedRange = null;
+async function fetchSuggestions(query){
 
-  window.insertImagen = function() {
-    // Guardar posición del cursor antes de abrir el file picker
-    const sel = window.getSelection();
-    if (sel && sel.rangeCount > 0) savedRange = sel.getRangeAt(0).cloneRange();
-    document.getElementById('f-img-input').click();
-  };
+    const countriesEurope =
+        "es,fr,de,it,nl,be,lu,ch,at,gb,ie,dk,no,se,fi,pl,cz,sk,hu,ro,bg,gr,hr,si,ee,lv,lt,pt";
 
-  window.handleImageInsert = async function(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    const editor = document.getElementById('f-body');
-    editor.focus();
+    const url =
+        `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(query)}&countrycodes=${countriesEurope}&limit=10`;
 
-    // Mostrar preview temporal mientras sube
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      try {
-        // Subir a Supabase
-        const ext = file.name.split('.').pop();
-        const path = `${currentUser.uid}/img_${Date.now()}.${ext}`;
-        const { error } = await supabase.storage.from(SUPABASE_BUCKET).upload(path, file, { cacheControl: '3600', upsert: false });
-        if (error) throw error;
-        const { data: { publicUrl } } = supabase.storage.from(SUPABASE_BUCKET).getPublicUrl(path);
+    try{
 
-        // Insertar imagen en la posición guardada del cursor
-        const img = document.createElement('img');
-        img.src = publicUrl;
-        img.style.maxWidth = '45%';
-        img.style.float = 'left';
-        img.style.margin = '6px 14px 6px 0';
-        img.style.borderRadius = '3px';
-        img.onclick = () => cycleImageAlign(img);
-        img.title = 'Clic para cambiar alineación';
+        const response = await fetch(url);
+        const data = await response.json();
 
-        if (savedRange) {
-          const sel = window.getSelection();
-          sel.removeAllRanges();
-          sel.addRange(savedRange);
-          savedRange.deleteContents();
-          savedRange.insertNode(img);
-          // Mover cursor después de la imagen
-          savedRange.setStartAfter(img);
-          savedRange.collapse(true);
-          sel.removeAllRanges();
-          sel.addRange(savedRange);
-        } else {
-          editor.appendChild(img);
+        suggestionsLog.innerHTML = "";
+
+        if(data && data.length > 0){
+
+            data.forEach(place => {
+
+                const nameParts = place.display_name.split(',');
+                const cityName = nameParts[0];
+                const countryName = nameParts[nameParts.length - 1].trim();
+
+                const countryCode =
+                    place.address.country_code
+                    ? place.address.country_code.toUpperCase()
+                    : "";
+
+                const li = document.createElement('li');
+
+                li.innerText = `${cityName} (${countryName})`;
+
+                li.onclick = () =>
+                    addPlace(
+                        cityName,
+                        parseFloat(place.lat),
+                        parseFloat(place.lon),
+                        countryCode
+                    );
+
+                suggestionsLog.appendChild(li);
+
+            });
+
+            suggestionsLog.style.display = 'block';
         }
-      } catch (err) {
-        alert('Error subiendo imagen: ' + err.message);
-      }
-    };
-    reader.readAsDataURL(file);
-    event.target.value = '';
-  };
 
-  function cycleImageAlign(img) {
-    if (img.style.float === 'left') {
-      img.style.float = 'right';
-      img.style.margin = '6px 0 6px 14px';
-      img.title = 'Clic: alineación derecha → centro';
-    } else if (img.style.float === 'right') {
-      img.style.float = 'none';
-      img.style.maxWidth = '100%';
-      img.style.display = 'block';
-      img.style.margin = '12px auto';
-      img.title = 'Clic: imagen completa → izquierda';
-    } else {
-      img.style.float = 'left';
-      img.style.maxWidth = '45%';
-      img.style.display = '';
-      img.style.margin = '6px 14px 6px 0';
-      img.title = 'Clic: alineación izquierda → derecha';
+    }catch(e){
+        console.error(e);
     }
-  }
+}
 
-  window.insertVideo = function() {
-    const sel = window.getSelection();
-    if (sel && sel.rangeCount > 0) savedRange = sel.getRangeAt(0).cloneRange();
-    document.getElementById('f-vid-input').click();
-  };
+function addPlace(name,lat,lon,countryCode){
 
-  window.handleVideoInsert = async function(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    if (file.size > 52428800) { alert('El video es demasiado grande (máx 50MB).'); return; }
-    const editor = document.getElementById('f-body');
-    const btn = document.getElementById('btn-publish');
-    btn.disabled = true; btn.textContent = 'Subiendo video...';
-    try {
-      const ext = file.name.split('.').pop();
-      const path = `${currentUser.uid}/vid_${Date.now()}.${ext}`;
-      const { error } = await supabase.storage.from(SUPABASE_BUCKET).upload(path, file, { cacheControl: '3600', upsert: false });
-      if (error) throw error;
-      const { data: { publicUrl } } = supabase.storage.from(SUPABASE_BUCKET).getPublicUrl(path);
-
-      const video = document.createElement('video');
-      video.src = publicUrl;
-      video.controls = true;
-      video.style.maxWidth = '100%';
-      video.style.display = 'block';
-      video.style.margin = '16px auto';
-      video.style.borderRadius = '4px';
-      video.style.background = '#000';
-
-      editor.focus();
-      if (savedRange) {
-        const sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(savedRange);
-        savedRange.deleteContents();
-        savedRange.insertNode(video);
-        savedRange.setStartAfter(video);
-        savedRange.collapse(true);
-        sel.removeAllRanges();
-        sel.addRange(savedRange);
-      } else {
-        editor.appendChild(video);
-      }
-    } catch (err) { alert('Error subiendo video: ' + err.message); }
-    btn.disabled = false; btn.textContent = editingId ? 'Actualizar' : 'Publicar';
-    event.target.value = '';
-  };
-
-  window.insertYoutube = function() {
-    const url = prompt('Pega el enlace de YouTube:');
-    if (!url) return;
-    let videoId = null;
-    const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([^&?/\s]+)/);
-    if (match) videoId = match[1];
-    if (!videoId) { alert('Enlace de YouTube no válido.'); return; }
-
-    const editor = document.getElementById('f-body');
-    editor.focus();
-
-    const wrap = document.createElement('div');
-    wrap.className = 'yt-embed';
-    wrap.style.cssText = 'position:relative;padding-bottom:56.25%;height:0;margin:20px 0;clear:both;';
-    const iframe = document.createElement('iframe');
-    iframe.src = `https://www.youtube.com/embed/${videoId}`;
-    iframe.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;border:none;border-radius:4px;';
-    iframe.allowFullscreen = true;
-    iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
-    wrap.appendChild(iframe);
-
-    const sel = window.getSelection();
-    if (savedRange) {
-      sel.removeAllRanges();
-      sel.addRange(savedRange);
-      savedRange.deleteContents();
-      savedRange.insertNode(wrap);
-    } else {
-      editor.appendChild(wrap);
+    if(isLoopClosed){
+        alert("Has cerrado tu ruta.");
+        return;
     }
-  };
 
-  window.fmt = function(cmd) { document.getElementById('f-body').focus(); document.execCommand(cmd, false, null); };
-  window.fmtBlock = function(tag) { document.getElementById('f-body').focus(); document.execCommand('formatBlock', false, tag); };
-  window.open_ = id => document.getElementById(id).classList.add('open');
-  window.close_ = id => document.getElementById(id).classList.remove('open');
-  window.closeIfOutside = (e, id) => { if (e.target.id === id) close_(id); };
+    if(travelRoute.length === 0){
+        homeCountry = countryCode;
+    }
 
-  cargarIdeas();
+    if(travelRoute.some(c => c.name === name)){
+        alert("Esta ciudad ya está añadida.");
+        return;
+    }
+
+    let isFirst = travelRoute.length === 0;
+
+    travelRoute.push({
+        name,
+        coords:[lat,lon],
+        country:countryCode,
+        stayDays:isFirst ? 0 : 2,
+        isReturnNode:false
+    });
+
+    cityInput.value = "";
+    suggestionsLog.style.display = 'none';
+
+    document.getElementById('btn-trigger-return').style.display = 'block';
+
+    updateUI();
+}
+
+function addFinalReturnStop(){
+
+    if(travelRoute.length < 2){
+        alert("Añade más destinos.");
+        return;
+    }
+
+    if(isLoopClosed) return;
+
+    let originNode = travelRoute[0];
+
+    travelRoute.push({
+        name:originNode.name,
+        coords:originNode.coords,
+        country:originNode.country,
+        stayDays:0,
+        isReturnNode:true
+    });
+
+    isLoopClosed = true;
+
+    document.getElementById('btn-trigger-return').style.display = 'none';
+
+    updateUI();
+}
+
+function removeDestination(index){
+
+    if(travelRoute[index].isReturnNode){
+        isLoopClosed = false;
+        document.getElementById('btn-trigger-return').style.display = 'block';
+    }
+
+    travelRoute.splice(index,1);
+
+    if(travelRoute.length === 0){
+        homeCountry = "";
+        isLoopClosed = false;
+        document.getElementById('btn-trigger-return').style.display = 'none';
+    }
+
+    updateUI();
+}
+
+async function drawStandardRoute(coord1,coord2){
+
+    let url =
+        `https://router.project-osrm.org/route/v1/driving/${coord1[1]},${coord1[0]};${coord2[1]},${coord2[0]}?overview=full&geometries=geojson`;
+
+    try{
+
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if(data.routes && data.routes.length > 0){
+
+            const coordinates = data.routes[0].geometry.coordinates;
+
+            L.polyline(
+                coordinates.map(c => [c[1],c[0]]),
+                {
+                    color:'#f97316',
+                    weight:4,
+                    opacity:.85
+                }
+            ).addTo(linesLayer);
+
+        }
+
+    }catch(e){}
+}
+
+async function updateUI(){
+
+    const listContainer = document.getElementById('route-list');
+
+    listContainer.innerHTML = "";
+
+    markersLayer.clearLayers();
+    linesLayer.clearLayers();
+
+    let bounds = [];
+
+    for(let index = 0; index < travelRoute.length; index++){
+
+        const city = travelRoute[index];
+
+        bounds.push(city.coords);
+
+        let legHTML = '';
+        let stayHTML = '';
+
+        if(index === 0){
+
+            stayHTML =
+                `<div class="stay-counter origin-label">
+                    🟢 Estación de Origen
+                </div>`;
+
+        }else if(city.isReturnNode){
+
+            stayHTML =
+                `<div class="stay-counter final-label">
+                    🔴 Regreso Final
+                </div>`;
+
+            const prevCity = travelRoute[index - 1];
+
+            await drawStandardRoute(prevCity.coords,city.coords);
+
+        }else{
+
+            const prevCity = travelRoute[index - 1];
+
+            await drawStandardRoute(prevCity.coords,city.coords);
+
+            legHTML =
+                `<div class="train-leg-info">
+                    🚄 Trayecto Internacional
+                </div>`;
+
+            stayHTML =
+                `<div class="stay-counter">
+                    <span>Estancia:</span>
+                    <input type="number" min="1" value="${city.stayDays}">
+                    <span>días</span>
+                </div>`;
+        }
+
+        const li = document.createElement('li');
+
+        li.className = 'destination-item';
+
+        li.innerHTML = `
+            <div class="item-main">
+                <div class="destination-info">
+                    <span class="badge-number ${index === 0 ? 'origin' : (city.isReturnNode ? 'final-stop' : '')}">
+                        ${index + 1}
+                    </span>
+
+                    <span class="city-name">${city.name}</span>
+                </div>
+
+                <button class="btn-delete" onclick="removeDestination(${index})">
+                    ✕
+                </button>
+            </div>
+
+            ${stayHTML}
+            ${legHTML}
+        `;
+
+        listContainer.appendChild(li);
+
+        L.marker(city.coords,{
+            icon:L.divIcon({
+                className:'custom-div-icon',
+                html:`
+                    <div class="marker-pin ${index === 0 ? 'origin-pin' : (city.isReturnNode ? 'final-pin' : '')}">
+                        ${index + 1}
+                    </div>
+                `,
+                iconSize:[28,28],
+                iconAnchor:[14,14]
+            })
+        }).addTo(markersLayer);
+
+    }
+
+    if(bounds.length > 1){
+        map.fitBounds(
+            L.latLngBounds(bounds),
+            {
+                padding:[60,60]
+            }
+        );
+    }
+}
+
+function openSummaryModal(){
+
+    if(travelRoute.length < 2){
+        alert("Añade más destinos.");
+        return;
+    }
+
+    const modal = document.getElementById('summary-modal');
+    const body = document.getElementById('modal-content-body');
+
+    let pathStr =
+        travelRoute.map(c => `${c.name} (${c.country})`).join(" ➔ ");
+
+    body.innerHTML = `
+
+        <div class="modal-section">
+            <h3>🚇 Trazado Ferroviario</h3>
+
+            <p style="margin-top:8px;font-weight:700;">
+                ${pathStr}
+            </p>
+        </div>
+
+        <div class="modal-section">
+            <h3>🗺️ Vista Final de la Ruta</h3>
+
+            <div id="summary-map"></div>
+        </div>
+    `;
+
+    modal.classList.add('active');
+
+    setTimeout(() => {
+
+        if(window.summaryMapInstance){
+            window.summaryMapInstance.remove();
+        }
+
+        const summaryMap = L.map('summary-map',{
+            zoomControl:false,
+            attributionControl:false
+        });
+
+        window.summaryMapInstance = summaryMap;
+
+        L.tileLayer(
+            'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
+        ).addTo(summaryMap);
+
+        const routeCoords = travelRoute.map(c => c.coords);
+
+        L.polyline(routeCoords,{
+            color:'#3b82f6',
+            weight:4,
+            opacity:.9
+        }).addTo(summaryMap);
+
+        travelRoute.forEach((city,index) => {
+
+            L.marker(city.coords)
+                .addTo(summaryMap)
+                .bindPopup(`<b>${index + 1}. ${city.name}</b>`);
+
+        });
+
+        summaryMap.fitBounds(routeCoords,{
+            padding:[30,30]
+        });
+
+    },150);
+}
+
+function closeSummaryModal(){
+    document.getElementById('summary-modal').classList.remove('active');
+}
+
 </script>
+
 </body>
 </html>
+```
